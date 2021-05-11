@@ -25,5 +25,9 @@ public:
         data = (float *) realloc(data, new_size * 2 * sizeof(float));
         size = new_size;
     }
+    inline float dist_sq(int id1, int id2) {
+        return (data[id1*2] - data[id2*2]) * (data[id1*2] - data[id2*2]) +
+            (data[id1*2+1] - data[id2*2+1]) * (data[id1*2+1] - data[id2*2+1]);
+    } 
     
 };
