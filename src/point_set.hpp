@@ -1,33 +1,30 @@
 #pragma once
-#include <assert.h>
-#include <cstdlib>
-#include <cstring>
+
+typedef struct BBox {
+    float min_x;
+    float min_y;
+    float max_x;
+    float max_y;
+} BBox;
 
 class PointSet {
 public:
     int size;
     float *data;
-    PointSet(int size) {
-        this->size = size;
-        data = (float *) malloc(2 * size * sizeof(float));
-        assert(data != NULL);
-        memset(data, 0, 2 * size * sizeof(float));
-    }
-    ~PointSet() { free(data); }
+    PointSet(int size);
+    ~PointSet();
     
     inline float get_x(int id) { return data[id*2]; }
     inline float get_y(int id) { return data[id*2 + 1]; }
-    void set(int id, float xval, float yval) {
+    inline void set(int id, float xval, float yval) {
         data[id*2] = xval;
         data[id*2 + 1] = yval;
     }
-    void resize(int new_size) {
-        data = (float *) realloc(data, new_size * 2 * sizeof(float));
-        size = new_size;
-    }
+    void resize(int new_size);
     inline float dist_sq(int id1, int id2) {
         return (data[id1*2] - data[id2*2]) * (data[id1*2] - data[id2*2]) +
             (data[id1*2+1] - data[id2*2+1]) * (data[id1*2+1] - data[id2*2+1]);
-    } 
+    }
+    BBox extent();
     
 };

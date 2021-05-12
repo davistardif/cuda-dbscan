@@ -42,7 +42,7 @@ void test_dbscan(void) {
 
 int main(void) {
     test_dbscan();
-    PointSet ps = get_n_pickups(1000, NULL);
+    PointSet ps = get_n_pickups(1000, nullptr);
     Clustering c = naive_dbscan(ps, .004, 30);
     c.print();
     return 0;
