@@ -1,7 +1,4 @@
 #pragma once
-#include <assert.h>
-#include <cstdlib>
-#include <cstring>
 
 class Clustering {
     /**
@@ -18,19 +15,8 @@ public:
     int size;
     int *labels;
     bool *border;
-    Clustering(int size) {
-        this->size = size;
-        labels = (int *) malloc(size * sizeof(int));
-        border = (bool *) malloc(size * sizeof(bool));
-        assert(labels != NULL);
-        assert(border != NULL);
-        memset(labels, 0, size * sizeof(int));
-        memset(border, 0, size * sizeof(bool));
-    }
-    ~Clustering() {
-        free(labels);
-        free(border);
-    }
+    Clustering(int size);
+    ~Clustering();
     // Getters
     inline int get_cluster(int id) { return labels[id]; }
     inline bool is_noise(int id) { return labels[id] == -1; }
@@ -43,4 +29,5 @@ public:
         labels[id] = cluster;
         border[id] = true;
     }
+    void print();
 };

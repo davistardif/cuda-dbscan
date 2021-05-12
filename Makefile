@@ -1,6 +1,6 @@
 # Source files
 CUDA_FILES =
-CPP_FILES = src/load_taxi.cpp src/cpu_dbscan.cpp src/naive_dbscan.cpp
+CPP_FILES = src/load_taxi.cpp src/cpu_dbscan.cpp src/naive_dbscan.cpp src/clustering.cpp
 
 # CUDA Compiler and Flags
 CUDA_PATH = /usr/local/cuda-9.1
