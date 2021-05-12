@@ -3,6 +3,7 @@
 #include "point_set.hpp"
 #include "clustering.hpp"
 #include "naive_dbscan.hpp"
+#include "load_taxi.hpp"
 
 void test_dbscan(void) {
     // Create a test dataset of 10 points to ensure alg. works correctly
@@ -41,4 +42,8 @@ void test_dbscan(void) {
 
 int main(void) {
     test_dbscan();
+    PointSet ps = get_n_pickups(1000, NULL);
+    Clustering c = naive_dbscan(ps, .004, 30);
+    c.print();
+    return 0;
 }
