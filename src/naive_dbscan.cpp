@@ -2,7 +2,7 @@
 
 #include "point_set.hpp"
 #include "clustering.hpp"
-
+#include "cpu_dbscan.hpp"
 using namespace std;
 
 /**

@@ -2,7 +2,7 @@
 
 #include "point_set.hpp"
 #include "clustering.hpp"
-#include "naive_dbscan.hpp"
+#include "cpu_dbscan.hpp"
 #include "load_taxi.hpp"
 
 void test_dbscan(void) {
@@ -40,10 +40,23 @@ void test_dbscan(void) {
     }
 }
 
+void test_delaunay_dbscan(void) {
+    PointSet pts(8);
+    pts.set(0, 0, 0);
+    pts.set(1, -1, 0);
+    pts.set(2, 1, 0);
+    pts.set(3, 3, 0);
+    pts.set(4, 0, 5);
+    pts.set(5, -1, 5.5);
+    pts.set(6, 1, 5);
+    pts.set(7, 3, 5);
+    Clustering c = delaunay_dbscan(pts, 2, 3);
+}
 int main(void) {
     test_dbscan();
+    test_delaunay_dbscan();
     PointSet ps = get_n_pickups(1000, nullptr);
     Clustering c = naive_dbscan(ps, .004, 30);
-    c.print();
+    //c.print();
     return 0;
 }
