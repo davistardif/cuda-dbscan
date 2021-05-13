@@ -41,15 +41,21 @@ void test_dbscan(void) {
 }
 
 void test_delaunay_dbscan(void) {
-    PointSet pts(8);
+    // Create a test dataset of 10 points to ensure alg. works correctly
+    PointSet pts(10);
+    // Clusters: (0,1,2,3) (4,5,6,7) 3, 7 are border; 8, 9 are noise
+    // eps = 2, min_points = 3
     pts.set(0, 0, 0);
     pts.set(1, -1, 0);
     pts.set(2, 1, 0);
     pts.set(3, 3, 0);
-    pts.set(4, 0, 5);
-    pts.set(5, -1, 5.5);
-    pts.set(6, 1, 5);
-    pts.set(7, 3, 5);
+    pts.set(4, 0, 100);
+    pts.set(5, -1, 100.5);
+    pts.set(6, 1, 100);
+    pts.set(7, 3, 100);
+    pts.set(8, -5, -5);
+    pts.set(9, -100, 200);
+    
     Clustering c = delaunay_dbscan(pts, 2, 3);
 }
 int main(void) {
