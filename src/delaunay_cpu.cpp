@@ -133,9 +133,20 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
             }
         }
     }
-    // Testing: print core points
-    for (int i = 0; i < pts.size; i++) {
-        cout << i << (is_core[i] ? " core" : " not core") << "\n";
-    }
+    // Delaunay Triangulation of all core points
+
+    // TODO
+
+    // Keep only edges which cross cells and have length <= epsilon
+
+    // TODO
+
+    // Compute connected components (of cells)
+
+    // TODO
+
+    // Assign border points
+
+    // TODO
     return clusters;
 }
