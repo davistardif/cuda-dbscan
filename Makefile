@@ -43,7 +43,7 @@ GPP = g++
 FLAGS = -g -Wall -D_REENTRANT -std=c++0x -pthread
 INCLUDE = -I$(CUDA_INC_PATH)
 LIBS = -L$(CUDA_LIB_PATH) -lcudart
-CPU_INCLUDE = -I./delaunator-cpp/include
+CPU_INCLUDE = -I./include
 
 
 # C++ Object Files
