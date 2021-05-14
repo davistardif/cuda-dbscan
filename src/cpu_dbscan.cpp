@@ -15,7 +15,7 @@ void test_dbscan(void) {
     pts.set(2, 1, 0);
     pts.set(3, 3, 0);
     pts.set(4, 0, 100);
-    pts.set(5, -1, 100.5);
+    pts.set(5, -1, 100);
     pts.set(6, 1, 100);
     pts.set(7, 3, 100);
     pts.set(8, -5, -5);
@@ -50,7 +50,7 @@ void test_delaunay_dbscan(void) {
     pts.set(2, 1, 0);
     pts.set(3, 3, 0);
     pts.set(4, 0, 100);
-    pts.set(5, -1, 100.5);
+    pts.set(5, -1, 100);
     pts.set(6, 1, 100);
     pts.set(7, 3, 100);
     pts.set(8, -5, -5);

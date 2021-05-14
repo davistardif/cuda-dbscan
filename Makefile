@@ -42,7 +42,9 @@ CUDA_LINK_FLAGS = -dlink -Wno-deprecated-gpu-targets
 GPP = g++
 FLAGS = -g -Wall -D_REENTRANT -std=c++0x -pthread
 INCLUDE = -I$(CUDA_INC_PATH)
-LIBS = -L$(CUDA_LIB_PATH) -lcudart 
+LIBS = -L$(CUDA_LIB_PATH) -lcudart
+CPU_INCLUDE = -I./delaunator-cpp/include
+
 
 # C++ Object Files
 OBJ_CPU = $(addprefix cpu-, $(notdir $(addsuffix .o, $(CPP_FILES))))
@@ -51,7 +53,7 @@ OBJ_GPU = $(addprefix gpu-, $(notdir $(addsuffix .o, $(CPP_FILES))))
 all: cpu gpu
 
 cpu: $(OBJ_CPU)
-	$(GPP) $(FLAGS) -o cpu-dbscan $^
+	$(GPP) $(FLAGS) -o cpu-dbscan $(CPU_INCLUDE) $^
 
 gpu: $(OBJ_GPU) $(CUDA_OBJ) $(CUDA_OBJ_FILES)
 	$(GPP) $(FLAGS) -o gpu-dbscan $(INCLUDE) $^ $(LIBS) 
@@ -59,7 +61,7 @@ gpu: $(OBJ_GPU) $(CUDA_OBJ) $(CUDA_OBJ_FILES)
 
 # Compile C++ Source Files
 cpu-%.cpp.o: src/%.cpp
-	$(GPP) $(FLAGS) -c -o $@ $< 
+	$(GPP) $(FLAGS) -c -o $@ $(CPU_INCLUDE) $< 
 
 gpu-%.cpp.o: src/%.cpp
 	$(GPP) $(FLAGS) -c -o $@ $(INCLUDE) $< 

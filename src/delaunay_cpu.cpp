@@ -2,6 +2,8 @@
 #include "point_set.hpp"
 #include "cpu_dbscan.hpp"
 
+#include <delaunator.hpp>
+
 #include <vector>
 #include <cmath>
 #include <cstdio>
@@ -99,6 +101,7 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
     }
     */
     // Mark core
+    int num_core = 0;
     bool *is_core = (bool*) malloc(pts.size * sizeof(bool));
     assert(is_core != nullptr);
     memset(is_core, 0, pts.size * sizeof(bool));
@@ -108,6 +111,7 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
              for (int i = 0; i < it->second.size(); i++) {
                  is_core[it->second[i]] = true;
              }
+             num_core += it->second.size();
              continue;
         }
         // otherwise, need to check each point individually
@@ -130,16 +134,44 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
             }
             if (nbr_count >= min_points) {
                 is_core[pt1] = true;
+                num_core++;
             }
         }
     }
     // Delaunay Triangulation of all core points
 
-    // TODO
+    vector<double> core_pts;
+    vector<int> core_idx;
+    core_pts.reserve(num_core);
+    core_idx.reserve(num_core);
+    for (int i = 0; i < pts.size; i++) {
+        if (is_core[i]) {
+            core_pts.push_back(pts.get_x(i));
+            core_pts.push_back(pts.get_y(i));
+            core_idx.push_back(i);
+        }
+    }
+    delaunator::Delaunator delaunay(core_pts);
 
     // Keep only edges which cross cells and have length <= epsilon
 
-    // TODO
+    for (int i = 0; i < delaunay.triangles.size(); i++) {
+        int pt1 = core_idx[delaunay.triangles[i]];
+        int pt2 = core_idx[delaunay.triangles[(i % 3 == 2) ? i - 2 : i + 1]];
+        printf("edge: (%d, %d)\n", pt1, pt2);
+        // note: some edges are duplicated
+        if (pts.dist_sq(pt1, pt2) <= EPS_SQ) {
+            int x1 = (int) ((pts.get_x(pt1) - bbox.min_x) / side_len);
+            int y1 = (int) ((pts.get_y(pt1) - bbox.min_y) / side_len);
+            int x2 = (int) ((pts.get_x(pt2) - bbox.min_x) / side_len);
+            int y2 = (int) ((pts.get_y(pt2) - bbox.min_y) / side_len);
+            if (x1 != x2 || y1 != y2) {
+                // Keep edge: TODO
+                printf("Keeping edge (%d, %d) between cells (%d, %d) (%d, %d)\n",
+                       pt1, pt2, x1, y1, x2, y2);
+            }
+        }
+    }
 
     // Compute connected components (of cells)
 
