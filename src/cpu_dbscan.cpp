@@ -57,12 +57,30 @@ void test_delaunay_dbscan(void) {
     pts.set(9, -100, 200);
     
     Clustering c = delaunay_dbscan(pts, 2, 3);
+
+    int clu1 = c.get_cluster(0);
+    int clu2 = c.get_cluster(4);
+    for (int i = 0; i < 10; i++) {
+        assert(c.is_labeled(i));
+        if (i < 4) {
+            assert(c.get_cluster(i) == clu1);
+        }
+        else if (i < 8) {
+            assert(c.get_cluster(i) == clu2);
+        }
+        else {
+            assert(c.is_noise(i));
+        }
+        if (i == 3 || i == 7) {
+            assert(c.is_border(i));
+        }
+    }
 }
 int main(void) {
-    test_dbscan();
-    test_delaunay_dbscan();
+    //test_dbscan();
+    //test_delaunay_dbscan();
     PointSet ps = get_n_pickups(1000, nullptr);
-    Clustering c = naive_dbscan(ps, .004, 30);
-    //c.print();
+    Clustering c = delaunay_dbscan(ps, .004, 30);
+    c.print();
     return 0;
 }

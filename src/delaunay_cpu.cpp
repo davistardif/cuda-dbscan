@@ -4,6 +4,7 @@
 
 #include <delaunator.hpp>
 
+#include <list>
 #include <vector>
 #include <cmath>
 #include <cstdio>
@@ -62,8 +63,7 @@ vector<int> neighbor_cell_ids(unordered_map<int, vector<int>> &grid,
     }
     return valid_cells;
 }
-                              
-    
+
 Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points) {
     Clustering clusters(pts.size);
     const float EPS_SQ = epsilon * epsilon;
@@ -154,11 +154,11 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
     delaunator::Delaunator delaunay(core_pts);
 
     // Keep only edges which cross cells and have length <= epsilon
-
+    unordered_map<int, pair<bool, vector<int>>> cell_graph;
     for (int i = 0; i < delaunay.triangles.size(); i++) {
         int pt1 = core_idx[delaunay.triangles[i]];
         int pt2 = core_idx[delaunay.triangles[(i % 3 == 2) ? i - 2 : i + 1]];
-        printf("edge: (%d, %d)\n", pt1, pt2);
+        //printf("edge: (%d, %d)\n", pt1, pt2);
         // note: some edges are duplicated
         if (pts.dist_sq(pt1, pt2) <= EPS_SQ) {
             int x1 = (int) ((pts.get_x(pt1) - bbox.min_x) / side_len);
@@ -166,19 +166,79 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
             int x2 = (int) ((pts.get_x(pt2) - bbox.min_x) / side_len);
             int y2 = (int) ((pts.get_y(pt2) - bbox.min_y) / side_len);
             if (x1 != x2 || y1 != y2) {
-                // Keep edge: TODO
-                printf("Keeping edge (%d, %d) between cells (%d, %d) (%d, %d)\n",
-                       pt1, pt2, x1, y1, x2, y2);
+                // Keep edge
+                //printf("Keeping edge (%d, %d) between cells (%d, %d) (%d, %d)\n", pt1, pt2, x1, y1, x2, y2);
+                int idx1 = y1*grid_x_size + x1;
+                int idx2 = y2*grid_x_size + x2;
+                auto it1 = cell_graph.find(idx1);
+                auto it2 = cell_graph.find(idx2);
+                if (it1 == cell_graph.end()) {
+                    cell_graph[idx1] = make_pair(false, vector<int>());
+                    cell_graph[idx1].second.push_back(idx2);
+                }
+                else {
+                    it1->second.second.push_back(idx2);
+                }
+                if (it2 == cell_graph.end()) {
+                    cell_graph[idx2] = make_pair(false, vector<int>());
+                    cell_graph[idx2].second.push_back(idx1);
+                }
+                else {
+                    it2->second.second.push_back(idx1);
+                }
             }
         }
     }
 
     // Compute connected components (of cells)
-
-    // TODO
-
+    int cluster_count = 0;
+    list<int> queue;
+    for (auto it = cell_graph.begin(); it != cell_graph.end(); it++) {
+        if (it->second.first == true) { // already visited
+            continue;
+        }
+        cluster_count += 1;
+        queue.push_back(it->first);
+        while (!queue.empty()) {
+            int curr = queue.front();
+            queue.pop_front();
+            // Mark all core points in this cell with cluster id
+            for (auto pt_it = grid[curr].begin(); pt_it != grid[curr].end(); ++pt_it) {
+                if (is_core[*pt_it])
+                    clusters.set_cluster(*pt_it, cluster_count);
+            }
+            cell_graph[curr].first = true; // mark visited
+            vector<int> &adj = cell_graph[curr].second; 
+            for (int i = 0; i < adj.size(); i++) {
+                if (!cell_graph[adj[i]].first) {
+                    queue.push_back(adj[i]);
+                }
+            }
+        }           
+    }
     // Assign border points
-
-    // TODO
+    for (int i = 0; i < pts.size; i++) {
+        if (clusters.is_labeled(i))
+            continue;
+        int x = (int) ((pts.get_x(i) - bbox.min_x) / side_len);
+        int y = (int) ((pts.get_y(i) - bbox.min_y) / side_len);
+        vector<int> nbrs = neighbor_cell_ids(grid, x, y, grid_x_size, grid_y_size);
+        bool done = false;
+        int j = 0;
+        while (!done && j < nbrs.size()) {
+            vector<int> &nbr_pts = grid[nbrs[j]];
+            for (int &nbr_pt : nbr_pts) {
+                if (clusters.is_core(nbr_pt) && pts.dist_sq(i, nbr_pt) <= EPS_SQ) {
+                    clusters.set_border(i, clusters.get_cluster(nbr_pt));
+                    done = true;
+                    break;
+                }
+            }
+            j++;
+        }
+        if (!done) {
+            clusters.set_noise(i);
+        }
+    }
     return clusters;
 }

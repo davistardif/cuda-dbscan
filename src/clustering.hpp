@@ -21,6 +21,7 @@ public:
     inline int get_cluster(int id) { return labels[id]; }
     inline bool is_noise(int id) { return labels[id] == -1; }
     inline bool is_border(int id) { return border[id]; }
+    inline bool is_core(int id) { return !border[id] && labels[id] > 0; }
     inline bool is_labeled(int id) { return labels[id] != 0; }
     // Setters
     inline void set_cluster(int id, int cluster) { labels[id] = cluster; }
