@@ -1,5 +1,5 @@
 # Source files
-CUDA_FILES =
+CUDA_FILES = src/delaunay_gpu.cu test_delaunay_gpu.cpp
 CPP_FILES = src/load_taxi.cpp src/cpu_dbscan.cpp src/naive_dbscan.cpp src/clustering.cpp src/delaunay_cpu.cpp src/point_set.cpp src/disjoint_set.cpp
 
 # CUDA Compiler and Flags
