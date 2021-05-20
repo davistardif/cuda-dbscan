@@ -5,6 +5,11 @@
 #include "cpu_dbscan.hpp"
 #include "load_taxi.hpp"
 
+#include <chrono>
+#include <iostream>
+using namespace std;
+using namespace std::chrono;
+
 void test_dbscan(void) {
     // Create a test dataset of 10 points to ensure alg. works correctly
     PointSet pts(10);
@@ -76,11 +81,23 @@ void test_delaunay_dbscan(void) {
         }
     }
 }
+
 int main(void) {
-    //test_dbscan();
-    //test_delaunay_dbscan();
-    PointSet ps = get_n_pickups(1000, nullptr);
-    Clustering c = delaunay_dbscan(ps, .004, 30);
-    c.print();
+    test_dbscan();
+    test_delaunay_dbscan();
+    PointSet ps = get_n_pickups(5000, nullptr);
+    cout << "Naive CPU DBSCAN...\n";
+    auto start_time = high_resolution_clock::now();
+    Clustering c1 = naive_dbscan(ps, .004, 30);
+    auto end_time = high_resolution_clock::now();
+    duration<double, std::milli> ms_elapsed = end_time - start_time;
+    cout << ms_elapsed.count() << "ms\n";
+    cout << "Delaunay CPU DBSCAN...\n";
+    start_time = high_resolution_clock::now();
+    Clustering c2 = delaunay_dbscan(ps, .004, 30);
+    end_time = high_resolution_clock::now();
+    ms_elapsed = end_time - start_time;
+    cout << ms_elapsed.count() << "ms\n";
+    //c2.print();
     return 0;
 }

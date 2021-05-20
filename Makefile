@@ -1,6 +1,6 @@
 # Source files
 CUDA_FILES =
-CPP_FILES = src/load_taxi.cpp src/cpu_dbscan.cpp src/naive_dbscan.cpp src/clustering.cpp src/delaunay_cpu.cpp src/point_set.cpp
+CPP_FILES = src/load_taxi.cpp src/cpu_dbscan.cpp src/naive_dbscan.cpp src/clustering.cpp src/delaunay_cpu.cpp src/point_set.cpp src/disjoint_set.cpp
 
 # CUDA Compiler and Flags
 CUDA_PATH = /usr/local/cuda-9.1
@@ -40,7 +40,7 @@ CUDA_LINK_FLAGS = -dlink -Wno-deprecated-gpu-targets
 
 # C++ Compiler and Flags
 GPP = g++
-FLAGS = -g -Wall -D_REENTRANT -std=c++0x -pthread
+FLAGS = -g -Wall -D_REENTRANT -std=c++0x -pthread -O3
 INCLUDE = -I$(CUDA_INC_PATH)
 LIBS = -L$(CUDA_LIB_PATH) -lcudart
 CPU_INCLUDE = -I./include

@@ -1,6 +1,7 @@
 #include "clustering.hpp"
 #include "point_set.hpp"
 #include "cpu_dbscan.hpp"
+#include "disjoint_set.hpp"
 
 #include <delaunator.hpp>
 
@@ -25,7 +26,7 @@ vector<int> neighbor_cell_ids(unordered_map<int, vector<int>> &grid,
        of (x,y) and are non-empty
        Note: does not include (x,y) itself
     */
-    vector<int> cell_r_c = {
+    int cell_r_c[] = {
         (y-2), x - 1,
         (y-2), x,
         (y-2), x + 1,
@@ -86,37 +87,27 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
             it->second.push_back(i);
         }
     }
-    /*
-    // Testing: Print out the grid
-    auto it = grid.begin();
-    while (it != grid.end()) {
-        int x = it->first % grid_x_size;
-        int y = it->first / grid_x_size;
-        printf("(%d,%d): ", x, y);
-        for (int i = 0; i < it->second.size(); i++) {
-            printf("%d,", it->second[i]);
-        }
-        printf("\n");
-        it++;
-    }
-    */
+    
     // Mark core
-    int num_core = 0;
+    int num_core = 0, num_core_cells = 0;
     bool *is_core = (bool*) malloc(pts.size * sizeof(bool));
     assert(is_core != nullptr);
     memset(is_core, 0, pts.size * sizeof(bool));
+    unordered_map<int, int> core_cell_idx;
     for (auto it = grid.begin(); it != grid.end(); it++) {
         if (it->second.size() >= min_points) {
             // mark all points in the cell as core points
-             for (int i = 0; i < it->second.size(); i++) {
-                 is_core[it->second[i]] = true;
-             }
-             num_core += it->second.size();
-             continue;
+            core_cell_idx[it->first] = num_core_cells++;
+            for (int i = 0; i < it->second.size(); i++) {
+                is_core[it->second[i]] = true;
+            }
+            num_core += it->second.size();
+            continue;
         }
         // otherwise, need to check each point individually
         int x = it->first % grid_x_size;
         int y = it->first / grid_x_size;
+        bool cell_has_core = false;
         for (int i = 0; i < it->second.size(); i++) {
             // scan over neighboring cells (anything else is too far away to matter)
             int pt1 = it->second[i];
@@ -135,9 +126,15 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
             if (nbr_count >= min_points) {
                 is_core[pt1] = true;
                 num_core++;
+                if (!cell_has_core) {
+                    core_cell_idx[it->first] = num_core_cells++;
+                    cell_has_core = true;
+                }
             }
         }
     }
+    //printf("Number of core points: %d\n", num_core);
+
     // Delaunay Triangulation of all core points
 
     vector<double> core_pts;
@@ -154,7 +151,7 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
     delaunator::Delaunator delaunay(core_pts);
 
     // Keep only edges which cross cells and have length <= epsilon
-    unordered_map<int, pair<bool, vector<int>>> cell_graph;
+    DisjointSet dj_set(num_core_cells);
     for (int i = 0; i < delaunay.triangles.size(); i++) {
         int pt1 = core_idx[delaunay.triangles[i]];
         int pt2 = core_idx[delaunay.triangles[(i % 3 == 2) ? i - 2 : i + 1]];
@@ -168,53 +165,19 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
             if (x1 != x2 || y1 != y2) {
                 // Keep edge
                 //printf("Keeping edge (%d, %d) between cells (%d, %d) (%d, %d)\n", pt1, pt2, x1, y1, x2, y2);
-                int idx1 = y1*grid_x_size + x1;
-                int idx2 = y2*grid_x_size + x2;
-                auto it1 = cell_graph.find(idx1);
-                auto it2 = cell_graph.find(idx2);
-                if (it1 == cell_graph.end()) {
-                    cell_graph[idx1] = make_pair(false, vector<int>());
-                    cell_graph[idx1].second.push_back(idx2);
-                }
-                else {
-                    it1->second.second.push_back(idx2);
-                }
-                if (it2 == cell_graph.end()) {
-                    cell_graph[idx2] = make_pair(false, vector<int>());
-                    cell_graph[idx2].second.push_back(idx1);
-                }
-                else {
-                    it2->second.second.push_back(idx1);
-                }
+                int idx1 = core_cell_idx[y1*grid_x_size + x1];
+                int idx2 = core_cell_idx[y2*grid_x_size + x2];
+                dj_set.union_sets(idx1, idx2);
             }
         }
     }
-
-    // Compute connected components (of cells)
-    int cluster_count = 0;
-    list<int> queue;
-    for (auto it = cell_graph.begin(); it != cell_graph.end(); it++) {
-        if (it->second.first == true) { // already visited
-            continue;
+    // set cluster id based on disjoint set representatives (i.e. connected components)
+    for (auto it = core_cell_idx.begin(); it != core_cell_idx.end(); it++) {
+        int cluster_id = dj_set.find_set(it->second) + 1;
+        for (auto pt_it = grid[it->first].begin(); pt_it != grid[it->first].end(); ++pt_it) {
+            if (is_core[*pt_it])
+                clusters.set_cluster(*pt_it, cluster_id);
         }
-        cluster_count += 1;
-        queue.push_back(it->first);
-        while (!queue.empty()) {
-            int curr = queue.front();
-            queue.pop_front();
-            // Mark all core points in this cell with cluster id
-            for (auto pt_it = grid[curr].begin(); pt_it != grid[curr].end(); ++pt_it) {
-                if (is_core[*pt_it])
-                    clusters.set_cluster(*pt_it, cluster_count);
-            }
-            cell_graph[curr].first = true; // mark visited
-            vector<int> &adj = cell_graph[curr].second; 
-            for (int i = 0; i < adj.size(); i++) {
-                if (!cell_graph[adj[i]].first) {
-                    queue.push_back(adj[i]);
-                }
-            }
-        }           
     }
     // Assign border points
     for (int i = 0; i < pts.size; i++) {
@@ -226,6 +189,10 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
         bool done = false;
         int j = 0;
         while (!done && j < nbrs.size()) {
+            if (core_cell_idx.count(nbrs[j]) == 0) {
+                j++;
+                continue; // has no core points, skip this cell
+            }
             vector<int> &nbr_pts = grid[nbrs[j]];
             for (int &nbr_pt : nbr_pts) {
                 if (clusters.is_core(nbr_pt) && pts.dist_sq(i, nbr_pt) <= EPS_SQ) {
@@ -240,5 +207,6 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
             clusters.set_noise(i);
         }
     }
+    free(is_core);
     return clusters;
 }
