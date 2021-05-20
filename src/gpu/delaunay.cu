@@ -1,4 +1,4 @@
-#inlcude "delaunay.cuh"
+#include "delaunay.cuh"
 
 #include <cuda_runtime.h>
 
