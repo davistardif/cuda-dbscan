@@ -19,8 +19,6 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 inline void CUDA_KERNEL_CHECK() {
     cudaError err = cudaGetLastError();
     if  (cudaSuccess != err){
-        cerr << "Error " << cudaGetErrorString(err) << endl;
-    } else {
-        cerr << "No kernel error detected" << endl;
-    }
+        cerr << "Kernel error: " << cudaGetErrorString(err) << endl;
+    } 
 }

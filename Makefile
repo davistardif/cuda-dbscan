@@ -1,7 +1,9 @@
 # Source files
-CUDA_FILES = src/delaunay_gpu.cu
-GPU_CPP_FILES = src/test_delaunay_gpu.cpp src/load_taxi.cpp src/clustering.cpp src/point_set.cpp
-CPP_FILES = src/load_taxi.cpp src/cpu_dbscan.cpp src/naive_dbscan.cpp src/clustering.cpp src/delaunay_cpu.cpp src/point_set.cpp src/disjoint_set.cpp
+CUDA_FILES = $(wildcard src/gpu/*.cu)
+COMMON_CPP_FILES = $(wildcard src/common/*.cpp)
+GPU_CPP_FILES := $(wildcard src/gpu/*.cpp) $(COMMON_CPP_FILES)
+CPU_CPP_FILES := $(wildcard src/cpu/*.cpp) $(COMMON_CPP_FILES)
+
 
 # CUDA Compiler and Flags
 CUDA_PATH = /usr/local/cuda-9.1
@@ -42,13 +44,13 @@ CUDA_LINK_FLAGS = -dlink -Wno-deprecated-gpu-targets
 # C++ Compiler and Flags
 GPP = g++
 FLAGS = -g -Wall -D_REENTRANT -std=c++0x -pthread -O3
-INCLUDE = -I$(CUDA_INC_PATH)
+GPU_INCLUDE = -I$(CUDA_INC_PATH) -I./src/common
 LIBS = -L$(CUDA_LIB_PATH) -lcudart
-CPU_INCLUDE = -I./include
+CPU_INCLUDE = -I./include -I./src/common
 
 
 # C++ Object Files
-OBJ_CPU = $(addprefix cpu-, $(notdir $(addsuffix .o, $(CPP_FILES))))
+OBJ_CPU = $(addprefix cpu-, $(notdir $(addsuffix .o, $(CPU_CPP_FILES))))
 OBJ_GPU = $(addprefix gpu-, $(notdir $(addsuffix .o, $(GPU_CPP_FILES))))
 
 all: cpu gpu
@@ -57,19 +59,25 @@ cpu: $(OBJ_CPU)
 	$(GPP) $(FLAGS) -o cpu-dbscan $(CPU_INCLUDE) $^
 
 gpu: $(OBJ_GPU) $(CUDA_OBJ) $(CUDA_OBJ_FILES)
-	$(GPP) $(FLAGS) -o gpu-dbscan $(INCLUDE) $^ $(LIBS) 
+	$(GPP) $(FLAGS) -o gpu-dbscan $(GPU_INCLUDE) $^ $(LIBS) 
 
 
 # Compile C++ Source Files
-cpu-%.cpp.o: $(CPP_FILES)
+cpu-%.cpp.o: src/cpu/%.cpp
 	$(GPP) $(FLAGS) -c -o $@ $(CPU_INCLUDE) $< 
 
-gpu-%.cpp.o: $(GPU_CPP_FILES)
-	$(GPP) $(FLAGS) -c -o $@ $(INCLUDE) $< 
+cpu-%.cpp.o: src/common/%.cpp
+	$(GPP) $(FLAGS) -c -o $@ $(CPU_INCLUDE) $<
+
+gpu-%.cpp.o: src/gpu/%.cpp
+	$(GPP) $(FLAGS) -c -o $@ $(GPU_INCLUDE) $< 
+
+gpu-%.cpp.o: src/common/%.cpp
+	$(GPP) $(FLAGS) -c -o $@ $(GPU_INCLUDE) $<
 
 
 # Compile CUDA Source Files
-%.cu.o: src/%.cu
+%.cu.o: src/gpu/%.cu
 	$(NVCC) $(NVCC_FLAGS) $(NVCC_GENCODES) -c -o $@ $(NVCC_INCLUDE) $<
 
 cuda: $(CUDA_OBJ_FILES) $(CUDA_OBJ)
