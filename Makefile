@@ -1,5 +1,6 @@
 # Source files
-CUDA_FILES = src/delaunay_gpu.cu test_delaunay_gpu.cpp
+CUDA_FILES = src/delaunay_gpu.cu
+GPU_CPP_FILES = src/test_delaunay_gpu.cpp
 CPP_FILES = src/load_taxi.cpp src/cpu_dbscan.cpp src/naive_dbscan.cpp src/clustering.cpp src/delaunay_cpu.cpp src/point_set.cpp src/disjoint_set.cpp
 
 # CUDA Compiler and Flags
@@ -48,7 +49,7 @@ CPU_INCLUDE = -I./include
 
 # C++ Object Files
 OBJ_CPU = $(addprefix cpu-, $(notdir $(addsuffix .o, $(CPP_FILES))))
-OBJ_GPU = $(addprefix gpu-, $(notdir $(addsuffix .o, $(CPP_FILES))))
+OBJ_GPU = $(addprefix gpu-, $(notdir $(addsuffix .o, $(GPU_CPP_FILES))))
 
 all: cpu gpu
 
@@ -60,10 +61,10 @@ gpu: $(OBJ_GPU) $(CUDA_OBJ) $(CUDA_OBJ_FILES)
 
 
 # Compile C++ Source Files
-cpu-%.cpp.o: src/%.cpp
+cpu-%.cpp.o: $(CPP_FILES)
 	$(GPP) $(FLAGS) -c -o $@ $(CPU_INCLUDE) $< 
 
-gpu-%.cpp.o: src/%.cpp
+gpu-%.cpp.o: $(GPU_CPP_FILES)
 	$(GPP) $(FLAGS) -c -o $@ $(INCLUDE) $< 
 
 
