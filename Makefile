@@ -5,8 +5,10 @@ GPU_CPP_FILES := $(wildcard src/gpu/*.cpp) $(COMMON_CPP_FILES)
 CPU_CPP_FILES := $(wildcard src/cpu/*.cpp) $(COMMON_CPP_FILES)
 
 
+CUDA_OBJ = cuda.o
+
 # CUDA Compiler and Flags
-CUDA_PATH = /usr/local/cuda-9.1
+CUDA_PATH = /usr/local/cuda
 CUDA_INC_PATH = $(CUDA_PATH)/include
 CUDA_BIN_PATH = $(CUDA_PATH)/bin
 CUDA_LIB_PATH = $(CUDA_PATH)/lib64
@@ -45,7 +47,7 @@ CUDA_LINK_FLAGS = -dlink -Wno-deprecated-gpu-targets
 GPP = g++
 FLAGS = -g -Wall -D_REENTRANT -std=c++0x -pthread -O3
 GPU_INCLUDE = -I$(CUDA_INC_PATH) -I./src/common
-LIBS = -L$(CUDA_LIB_PATH) -lcudart
+LIBS = -L$(CUDA_LIB_PATH) -lcudart -lcuda
 CPU_INCLUDE = -I./include -I./src/common
 
 
