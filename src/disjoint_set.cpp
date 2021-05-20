@@ -15,6 +15,7 @@ DisjointSet::DisjointSet(int max_elems) {
 
 DisjointSet::~DisjointSet() {
     free(parent);
+    free(rank);
 }
 
 void DisjointSet::make_set(int v) {
