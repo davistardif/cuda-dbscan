@@ -1,3 +1,5 @@
+#inlcude "delaunay.cuh"
+
 #include <cuda_runtime.h>
 
 __device__ static float atomicMax(float* address, float val)

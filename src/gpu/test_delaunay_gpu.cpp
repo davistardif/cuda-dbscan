@@ -2,7 +2,7 @@
 #include "clustering.hpp"
 #include "load_taxi.hpp"
 #include "cuda_utils.hpp"
-#include "delaunay_gpu.cuh"
+#include "delaunay.cuh"
 
 #include <iostream>
 
