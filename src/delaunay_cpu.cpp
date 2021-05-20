@@ -69,10 +69,18 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
     Clustering clusters(pts.size);
     const float EPS_SQ = epsilon * epsilon;
     // Grid computation
+    /* Parallelization idea:
+       simple CUDA reduction kernel to find the min and max x,y coordinates
+    */
     BBox bbox = pts.extent();
     float side_len = epsilon / SQRT_2;
     int grid_x_size = (int) ((bbox.max_x - bbox.min_x) / side_len) + 1;
     int grid_y_size = (int) ((bbox.max_y - bbox.min_y) / side_len) + 1;
+    /* Parallelization idea:
+       Simple CUDA kernel can compute the grid index for each point,
+       and can use an external library for CUDA compatible hash table
+       e.g. CUDPP: http://cudpp.github.io/cudpp/2.2/hash_overview.html
+    */
     unordered_map<int, vector<int>> grid;
     for (int i = 0; i < pts.size; i++) {
         int x = (int) ((pts.get_x(i) - bbox.min_x) / side_len);
@@ -89,6 +97,12 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
     }
     
     // Mark core
+    /*
+      Parallelization idea:
+      CUDA kernel will work on keys of grid hash table in parallel
+      Perhaps two stages, one for cells with >= min_points and one 
+      for searching neighboring cells to avoid warp divergence
+    */
     int num_core = 0, num_core_cells = 0;
     bool *is_core = (bool*) malloc(pts.size * sizeof(bool));
     assert(is_core != nullptr);
@@ -136,7 +150,10 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
     //printf("Number of core points: %d\n", num_core);
 
     // Delaunay Triangulation of all core points
-
+    /*
+      Parallelization idea:
+      Use external library (gDel2d)
+    */
     vector<double> core_pts;
     vector<int> core_idx;
     core_pts.reserve(num_core);
@@ -151,6 +168,14 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
     delaunator::Delaunator delaunay(core_pts);
 
     // Keep only edges which cross cells and have length <= epsilon
+    /** 
+        Parallelization idea:
+        Implement union-find data structure for cuda
+        following this paper: 
+        https://userweb.cs.txstate.edu/~mb92/papers/hpdc18.pdf
+        Reference code is also available at:
+        https://userweb.cs.txstate.edu/~burtscher/research/ECL-CC/
+    */
     DisjointSet dj_set(num_core_cells);
     for (int i = 0; i < delaunay.triangles.size(); i++) {
         int pt1 = core_idx[delaunay.triangles[i]];
@@ -180,6 +205,10 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
         }
     }
     // Assign border points
+    /**
+       Parallelization idea:
+       CUDA kernel which will be very similar to mark core
+    */
     for (int i = 0; i < pts.size; i++) {
         if (clusters.is_labeled(i))
             continue;

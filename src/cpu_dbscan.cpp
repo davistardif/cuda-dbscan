@@ -85,7 +85,7 @@ void test_delaunay_dbscan(void) {
 int main(void) {
     test_dbscan();
     test_delaunay_dbscan();
-    PointSet ps = get_n_pickups(5000, nullptr);
+    PointSet ps = get_n_pickups(10000, nullptr);
     cout << "Naive CPU DBSCAN...\n";
     auto start_time = high_resolution_clock::now();
     Clustering c1 = naive_dbscan(ps, .004, 30);
