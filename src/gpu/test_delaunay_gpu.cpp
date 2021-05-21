@@ -19,7 +19,8 @@ int main(void) {
     CUDA_CALL(cudaMalloc((void**)&dev_coords, pts.size * 2 * sizeof(float)));
     CUDA_CALL(cudaMemcpy(dev_max_x, &max_x, sizeof(float), cudaMemcpyHostToDevice));
     CUDA_CALL(cudaMemcpy(dev_max_y, &max_y, sizeof(float), cudaMemcpyHostToDevice));
-    CUDA_CALL(cudaMemcpy(dev_coords, pts.data, pts.size * 2 * sizeof(float)));
+    CUDA_CALL(cudaMemcpy(dev_coords, pts.data, pts.size * 2 * sizeof(float),
+                  cudaMemcpyHostToDevice));
     cudaCallMaxXYKernel(1024 / 32, 32, dev_coords, pts.size * 2,
                         dev_max_x, dev_max_y);
     CUDA_KERNEL_CHECK();
