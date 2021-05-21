@@ -13,8 +13,8 @@ int main(void) {
     BBox bbox = pts.extent();
     float max_x = -1000, max_y = -1000; // definitely less than gps coords
     float *dev_max_x, *dev_max_y;
-    CUDA_CALL(cudaMalloc((void**)dev_max_x, sizeof(float)));
-    CUDA_CALL(cudaMalloc((void**)dev_max_y, sizeof(float)));
+    CUDA_CALL(cudaMalloc((void**)&dev_max_x, sizeof(float)));
+    CUDA_CALL(cudaMalloc((void**)&dev_max_y, sizeof(float)));
     CUDA_CALL(cudaMemcpy(dev_max_x, &max_x, sizeof(float), cudaMemcpyHostToDevice));
     CUDA_CALL(cudaMemcpy(dev_max_y, &max_y, sizeof(float), cudaMemcpyHostToDevice));
     cudaCallMaxXYKernel(1024 / 32, 32, pts.data, pts.size * 2,
