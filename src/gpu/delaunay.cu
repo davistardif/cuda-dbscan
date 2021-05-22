@@ -122,6 +122,6 @@ void cudaCallMaxXYKernel(const unsigned int blocks,
 void cudaCallMinXYKernel(const unsigned int blocks,
                          const unsigned int threadsPerBlock,
                          float *coords, int length, float *min_x, float *min_y) {
-    cudaMaxXYKernel<<<blocks, threadsPerBlock, threadsPerBlock * sizeof(float)>>>(
+    cudaMinXYKernel<<<blocks, threadsPerBlock, threadsPerBlock * sizeof(float)>>>(
         coords, length, min_x, min_y);
 }
