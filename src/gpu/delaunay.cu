@@ -14,6 +14,18 @@ __device__ static float atomicMax(float* address, float val)
     return __int_as_float(old);
 }
 
+__device__ static float atomicMin(float* address, float val)
+{
+    int* address_as_i = (int*) address;
+    int old = *address_as_i, assumed;
+    do {
+        assumed = old;
+        old = ::atomicCAS(address_as_i, assumed,
+            __float_as_int(::fminf(val, __int_as_float(assumed))));
+    } while (assumed != old);
+    return __int_as_float(old);
+}
+
 
 /*
  Compute the maximum x value and maximum y value in an xy coordinate array
@@ -71,9 +83,45 @@ __global__ void cudaMaxXYKernel(float *coords, int length, float *max_x,
     }
 }
 
+// See documentation for cudaMaxXYKernel above
+__global__ void cudaMinXYKernel(float *coords, int length, float *min_x,
+                                float *min_y) {
+    extern __shared__ float sdata[];
+    uint tid = threadIdx.x;
+    uint i = blockIdx.x * blockDim.x * 2 + threadIdx.x;
+    for (; i < length; i += gridDim.x * blockDim.x * 2) {
+        if (i + blockDim.x < length) {
+            sdata[tid] = min(coords[i], coords[i + blockDim.x]);
+        }
+        else {
+            sdata[tid] = coords[i];
+        }
+        __syncthreads();
+        for (uint s = blockDim.x / 2; s > 1; s >>= 1) {
+            if (tid < s) {
+                sdata[tid] = min(sdata[tid], sdata[tid + s]);
+            }
+            __syncthreads();
+        }
+        if (tid == 0) {
+            atomicMin(min_x, sdata[0]);
+        }
+        else if (tid == 1) {
+            atomicMin(min_y, sdata[1]);
+        }
+    }
+}
+
 void cudaCallMaxXYKernel(const unsigned int blocks,
                          const unsigned int threadsPerBlock,
                          float *coords, int length, float *max_x, float *max_y) {
     cudaMaxXYKernel<<<blocks, threadsPerBlock, threadsPerBlock * sizeof(float)>>>(
         coords, length, max_x, max_y);
+}
+
+void cudaCallMinXYKernel(const unsigned int blocks,
+                         const unsigned int threadsPerBlock,
+                         float *coords, int length, float *min_x, float *min_y) {
+    cudaMaxXYKernel<<<blocks, threadsPerBlock, threadsPerBlock * sizeof(float)>>>(
+        coords, length, min_x, min_y);
 }
