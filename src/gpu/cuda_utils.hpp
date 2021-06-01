@@ -16,6 +16,16 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
     }
 }
 
+#define CUDPP_CALL(ans) { cudppAssert((ans), __FILE__, __LINE__); }
+inline void cudppAssert(CUDPPResult code, const char *file, int line, bool abort=true)
+{
+    if (code != CUDPP_SUCCESS) 
+    {
+        fprintf(stderr,"CUDPP Error at: %s %d\n", file, line);
+        exit(code);
+    }
+}
+
 inline void CUDA_KERNEL_CHECK() {
     cudaError err = cudaGetLastError();
     if  (cudaSuccess != err){

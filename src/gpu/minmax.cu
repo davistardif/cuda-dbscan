@@ -1,5 +1,7 @@
 #include "minmax.cuh"
 
+#include "cuda_utils.hpp"
+
 #include <cuda_runtime.h>
 
 __device__ static float atomicMax(float* address, float val)
@@ -117,6 +119,7 @@ void cudaCallMaxXYKernel(const unsigned int blocks,
                          float *coords, int length, float *max_x, float *max_y) {
     cudaMaxXYKernel<<<blocks, threadsPerBlock, threadsPerBlock * sizeof(float)>>>(
         coords, length, max_x, max_y);
+    CUDA_KERNEL_CHECK();
 }
 
 void cudaCallMinXYKernel(const unsigned int blocks,
@@ -124,4 +127,5 @@ void cudaCallMinXYKernel(const unsigned int blocks,
                          float *coords, int length, float *min_x, float *min_y) {
     cudaMinXYKernel<<<blocks, threadsPerBlock, threadsPerBlock * sizeof(float)>>>(
         coords, length, min_x, min_y);
+    CUDA_KERNEL_CHECK();
 }

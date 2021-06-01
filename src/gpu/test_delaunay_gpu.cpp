@@ -2,14 +2,14 @@
 #include "clustering.hpp"
 #include "load_taxi.hpp"
 #include "cuda_utils.hpp"
-#include "delaunay.cuh"
+#include "minmax.cuh"
 
 #include <iostream>
 #include <cstdio>
 
 using namespace std;
 
-int main(void) {
+int test_minmax(void) {
     PointSet pts = get_n_pickups(1024, nullptr);
     BBox bbox = pts.extent();
     float max_x = -1000, max_y = -1000; // definitely less than gps coords

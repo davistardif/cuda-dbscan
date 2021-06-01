@@ -4,8 +4,11 @@
 #include "point_set.hpp"
 #include "cuda_utils.hpp"
 #include "minmax.cuh"
+#include "grid.cuh"
 
 #include "cudpp.h"
+#include "cudpp_hash.h"
+#include "cudpp_config.h"
 
 #include <cmath>
 
@@ -27,6 +30,29 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
     int grid_x_size = (int) ((bbox.max_x - bbox.min_x) / side_len) + 1;
     int grid_y_size = (int) ((bbox.max_y - bbox.min_y) / side_len) + 1;
 
+    // label each point with a grid bin
+    uint *dev_pt_ids, *dev_grid_labels;
+    CUDA_CALL(cudaMalloc((void**)&dev_pt_ids, pts.size * sizeof(uint)));
+    CUDA_CALL(cudaMalloc((void**)&dev_grid_labels, pts.size * sizeof(uint)));
+    callGridLabelKernel(blocks, threadsPerBlock, dev_pt_ids, dev_grid_labels,
+                        dev_coords, bbox.min_x, bbox.min_y, side_len,
+                        grid_x_size, pts.size);
+
+    // Insert into hash table
+    CUDPPHandle *cudpp;
+    CUDPP_CALL(cudppCreate(cudpp));
+    CUDPPHashTableConfig hashconf = {
+        CUDPP_MULTIVALUE_HASH_TABLE,
+        pts.size,
+        1.25 // extra memory factor (1.05 to 2.0, trades memory for build speed)
+    };
+    CUDPPHandle *grid;
+    CUDPP_CALL(cudppHashTable(*cudpp, grid, hashconf));
+    CUDPP_CALL(cudppHashInsert(*grid, dev_grid_labels, dev_pt_ids, pts.size));
+    
+    CUDPP_CALL(cudppDestroyHashTable(*cudpp, *grid));
+    
+    CUDPP_CALL(cudppDestroy(cudpp));
     CUDA_CALL(cudaFree(dev_coords));
     return clusters;
 }
@@ -46,10 +72,8 @@ BBox cuda_extent(PointSet &pts, float *dev_coords,
     CUDA_CALL(cudaMemcpy(dev_min_y, &bbox.min_y, sizeof(float), cudaMemcpyHostToDevice));
     cudaCallMaxXYKernel(blocks, threadsPerBlock, dev_coords, pts.size * 2,
                         dev_max_x, dev_max_y);
-    CUDA_KERNEL_CHECK();
     cudaCallMinXYKernel(blocks, threadsPerBlock, dev_coords, pts.size * 2,
                         dev_min_x, dev_min_y);
-    CUDA_KERNEL_CHECK();
     CUDA_CALL(cudaMemcpy(&bbox.max_x, dev_max_x, sizeof(float), cudaMemcpyDeviceToHost));
     CUDA_CALL(cudaMemcpy(&bbox.max_y, dev_max_y, sizeof(float), cudaMemcpyDeviceToHost));
     CUDA_CALL(cudaMemcpy(&bbox.min_x, dev_min_x, sizeof(float), cudaMemcpyDeviceToHost));
