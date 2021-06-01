@@ -5,7 +5,11 @@
 #include "cuda_utils.hpp"
 #include "minmax.cuh"
 
+#include <cudpp>
+
 #include <cmath>
+
+#define SQRT_2 (1.4142135623)
 
 Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points) {
     // TODO: set these more appropriately
@@ -19,6 +23,9 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
                          cudaMemcpyHostToDevice));
     BBox bbox = cuda_extent(pts, dev_coords, blocks, threadsPerBlock);
 
+    const float side_len = epsilon / SQRT_2;
+    int grid_x_size = (int) ((bbox.max_x - bbox.min_x) / side_len) + 1;
+    int grid_y_size = (int) ((bbox.max_y - bbox.min_y) / side_len) + 1;
 
     CUDA_CALL(cudaFree(dev_coords));
     return clusters;
