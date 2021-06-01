@@ -1,3 +1,5 @@
+#include "delaunay.cuh"
+
 #include "clustering.hpp"
 #include "point_set.hpp"
 #include "cuda_utils.hpp"
