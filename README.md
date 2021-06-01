@@ -1,4 +1,17 @@
 # cuda-dbscan
+## Installation
+First, make sure that git submodule dependencies are added:
+`git submodule init`
+`git submodule update`
+
+Then, build the cudpp dependency using
+`make cudpp`
+
+Finally, build this project using
+`make`
+
+On systems where CUDA is not available, simply run
+`make cpu`
 
 ## CPU Demo
 Build with `make cpu`
