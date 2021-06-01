@@ -40,7 +40,7 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
 
     // Insert into hash table
     CUDPPHandle *cudpp;
-    cudppCreate(cudpp);
+    CUDPP_CALL(cudppCreate(cudpp));
     CUDPPHashTableConfig hashconf = {
         CUDPP_MULTIVALUE_HASH_TABLE,
         (uint) pts.size,
