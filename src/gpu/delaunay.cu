@@ -1,6 +1,7 @@
 #include "clustering.hpp"
 #include "point_set.hpp"
 #include "cuda_utils.hpp"
+#include "minmax.cuh"
 
 Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points) {
     Clustering clusters(pts.size);
@@ -43,4 +44,5 @@ BBox cuda_extent(PointSet &pts, float *dev_coords,
     CUDA_CALL(cudaFree(dev_max_y));
     CUDA_CALL(cudaFree(dev_min_x));
     CUDA_CALL(cudaFree(dev_min_y));
+    return bbox;
 }
