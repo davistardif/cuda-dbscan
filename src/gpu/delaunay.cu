@@ -5,7 +5,7 @@
 
 Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points) {
     Clustering clusters(pts.size);
-    const float EPS_SQ = epsilon * epsilon;
+    //const float EPS_SQ = epsilon * epsilon;
     float *dev_coords;
     CUDA_CALL(cudaMalloc((void**)&dev_coords, pts.size * 2 * sizeof(float)));
     CUDA_CALL(cudaMemcpy(dev_coords, pts.data, pts.size * 2 * sizeof(float),
