@@ -5,14 +5,19 @@
 #include "cuda_utils.hpp"
 #include "minmax.cuh"
 
+#include <cmath>
+
 Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points) {
+    // TODO: set these more appropriately
+    const unsigned int threadsPerBlock = 64;
+    const unsigned int blocks = (int) ceil((float) pts.size / threadsPerBlock);
     Clustering clusters(pts.size);
     //const float EPS_SQ = epsilon * epsilon;
     float *dev_coords;
     CUDA_CALL(cudaMalloc((void**)&dev_coords, pts.size * 2 * sizeof(float)));
     CUDA_CALL(cudaMemcpy(dev_coords, pts.data, pts.size * 2 * sizeof(float),
                          cudaMemcpyHostToDevice));
-    BBox bbox = cuda_extent(pts, dev_coords);
+    BBox bbox = cuda_extent(pts, dev_coords, blocks, threadsPerBlock);
 
 
     CUDA_CALL(cudaFree(dev_coords));
