@@ -23,8 +23,7 @@ NVCC_FLAGS := -m64
 endif
 NVCC_FLAGS += -g -dc -Wno-deprecated-gpu-targets --std=c++11 \
              --expt-relaxed-constexpr
-NVCC_INCLUDE =
-NVCC_LIBS = 
+
 NVCC_GENCODES = -gencode arch=compute_30,code=sm_30 \
 		-gencode arch=compute_35,code=sm_35 \
 		-gencode arch=compute_50,code=sm_50 \
@@ -50,6 +49,7 @@ GPU_INCLUDE = -I$(CUDA_INC_PATH) -I./src/common
 LIBS = -L$(CUDA_LIB_PATH) -lcudart -lcuda
 CPU_INCLUDE = -I./include -I./src/common
 
+NVCC_INCLUDE = $(GPU_INCLUDE)
 
 # C++ Object Files
 OBJ_CPU = $(addprefix cpu-, $(notdir $(addsuffix .o, $(CPU_CPP_FILES))))
