@@ -5,7 +5,7 @@
 #include "cuda_utils.hpp"
 #include "minmax.cuh"
 
-#include <cudpp>
+#include "cudpp.h"
 
 #include <cmath>
 
