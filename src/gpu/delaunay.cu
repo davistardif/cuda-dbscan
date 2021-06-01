@@ -52,7 +52,7 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
     
     CUDPP_CALL(cudppDestroyHashTable(*cudpp, *grid));
     
-    CUDPP_CALL(cudppDestroy(&cudpp));
+    CUDPP_CALL(cudppDestroy(*cudpp));
     CUDA_CALL(cudaFree(dev_coords));
     return clusters;
 }
