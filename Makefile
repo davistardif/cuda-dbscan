@@ -45,8 +45,8 @@ CUDA_LINK_FLAGS = -dlink -Wno-deprecated-gpu-targets
 # C++ Compiler and Flags
 GPP = g++
 FLAGS = -g -Wall -D_REENTRANT -std=c++0x -pthread -O3
-GPU_INCLUDE = -I$(CUDA_INC_PATH) -I./src/common
-LIBS = -L$(CUDA_LIB_PATH) -lcudart -lcuda
+GPU_INCLUDE = -I$(CUDA_INC_PATH) -I./src/common -I./lib/cudpp/include
+LIBS = -L$(CUDA_LIB_PATH) -lcudart -lcuda -L./lib/cudpp/build/lib
 CPU_INCLUDE = -I./include -I./src/common
 
 NVCC_INCLUDE = $(GPU_INCLUDE)
@@ -88,10 +88,14 @@ cuda: $(CUDA_OBJ_FILES) $(CUDA_OBJ)
 $(CUDA_OBJ): $(CUDA_OBJ_FILES)
 	$(NVCC) $(CUDA_LINK_FLAGS) $(NVCC_GENCODES) -o $@ $(NVCC_INCLUDE) $^
 
+cudpp:
+	rm -rf lib/cudpp/build
+	mkdir lib/cudpp/build
+	cd lib/cudpp/build; cmake ../src ../; make
 
 # Clean everything including temporary Emacs files
 clean:
 	rm -f cpu-dbscan gpu-dbscan *.o *~
 	rm -f src/*~
 
-.PHONY: clean
+.PHONY: clean cudpp
