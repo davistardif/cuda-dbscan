@@ -1,4 +1,4 @@
-#include "delaunay.cuh"
+#include "minmax.cuh"
 
 #include <cuda_runtime.h>
 
