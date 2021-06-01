@@ -21,7 +21,6 @@ BBox cuda_extent(PointSet &pts, float *dev_coords,
                  const unsigned int threadsPerBlock) {
     BBox bbox = {.min_x = 1000, .min_y = 1000, .max_x = -1000, .max_y = -1000 };
     float *dev_max_x, *dev_max_y, *dev_min_x, *dev_min_y;
-    unsigned int blocks = ceil(
     CUDA_CALL(cudaMalloc((void**)&dev_max_x, sizeof(float)));
     CUDA_CALL(cudaMalloc((void**)&dev_max_y, sizeof(float)));
     CUDA_CALL(cudaMalloc((void**)&dev_min_x, sizeof(float)));
