@@ -1,0 +1,3 @@
+[submodule "lib/cudpp"]
+	path = lib/cudpp
+	url = https://github.com/cudpp/cudpp
