@@ -76,8 +76,8 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
         if (!isCore[i]) {
             int x = (int) ((pts.get_x(i) - bbox.min_x) / side_len);
             int y = (int) ((pts.get_y(i) - bbox.min_y) / side_len);
-            vector<uint> ncells = neighbor_cell_ids(x, y, grid_x_size, grid_y_size);
-            CUDA_CALL(cudaMemcpy(d_query_keys, ncells.data,
+            vector<int> ncells = neighbor_cell_ids(x, y, grid_x_size, grid_y_size);
+            CUDA_CALL(cudaMemcpy(d_query_keys, (uint *) ncells.data(),
                                  ncells.size() * sizeof(uint), cudaMemcpyHostToDevice));
             CUDPP_CALL(cudppHashRetrieve(*grid, d_query_keys, d_results, ncells.size())); 
         }
@@ -119,12 +119,12 @@ BBox cuda_extent(PointSet &pts, float *dev_coords,
     return bbox;
 }
 
-vector<uint> neighbor_cell_ids(int x, int y, int grid_x_size, int grid_y_size) {
+vector<int> neighbor_cell_ids(int x, int y, int grid_x_size, int grid_y_size) {
     /* Returns a vector of cell id's in grid which are epsilon neighbors
        of (x,y) and not out of bounds.
        includes (x,y) itself
     */
-    uint cell_r_c[] = {
+    int cell_r_c[] = {
         (y-2), x - 1,
         (y-2), x,
         (y-2), x + 1,
@@ -146,17 +146,17 @@ vector<uint> neighbor_cell_ids(int x, int y, int grid_x_size, int grid_y_size) {
         (y+1), x + 1,
         (y+1), x + 2
     };
-    vector<uint> valid_cells;
+    vector<int> valid_cells;
     valid_cells.reserve(21);
-    valid_cell.push_back(y * grid_x_size + x);
+    valid_cells.push_back(y * grid_x_size + x);
     for (int i = 0; i < 20; i++) { // 20 neighbor cell possibilities
-        uint r = cell_r_c[i*2];
-        uint c = cell_r_c[i*2 + 1];
+        int r = cell_r_c[i*2];
+        int c = cell_r_c[i*2 + 1];
         if (c < 0 || r < 0 || c >= grid_x_size || r >= grid_y_size) {
             // out of bounds
             continue;
         }
-        uint id = r * grid_x_size + c;
+        int id = r * grid_x_size + c;
         valid_cells.push_back(id);
     }
     return valid_cells;

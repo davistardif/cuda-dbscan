@@ -9,4 +9,4 @@ BBox cuda_extent(PointSet &pts, float *dev_coords,
                  const unsigned int blocks,
                  const unsigned int threadsPerBlock);
 
-vector<uint> neighbor_cell_ids(int x, int y, int grid_x_size, int grid_y_size);
+vector<int> neighbor_cell_ids(int x, int y, int grid_x_size, int grid_y_size);
