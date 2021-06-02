@@ -6,9 +6,7 @@
 #include "minmax.cuh"
 #include "grid.cuh"
 
-#include "cudpp.h"
-#include "cudpp_hash.h"
-#include "cudpp_config.h"
+#include "multi_value_hash_table.cuh"
 
 #include <cmath>
 

@@ -45,8 +45,8 @@ CUDA_LINK_FLAGS = -dlink -Wno-deprecated-gpu-targets
 # C++ Compiler and Flags
 GPP = g++
 FLAGS = -g -Wall -D_REENTRANT -std=c++0x -pthread -O3
-GPU_INCLUDE = -I$(CUDA_INC_PATH) -I./src/common -I./lib/cudpp/include
-LIBS = -L$(CUDA_LIB_PATH) -lcudart -lcuda -L./lib/cudpp/build/lib -lcudpp_hash -lcudpp
+GPU_INCLUDE = -I$(CUDA_INC_PATH) -I./src/common -I./include/warpcore
+LIBS = -L$(CUDA_LIB_PATH) -lcudart -lcuda 
 CPU_INCLUDE = -I./include -I./src/common
 
 NVCC_INCLUDE = $(GPU_INCLUDE)
