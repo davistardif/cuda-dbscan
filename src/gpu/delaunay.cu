@@ -16,6 +16,8 @@
 
 #define SQRT_2 (1.4142135623)
 
+using std::vector;
+
 Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points) {
     // TODO: set these more appropriately
     const unsigned int threadsPerBlock = 64;
