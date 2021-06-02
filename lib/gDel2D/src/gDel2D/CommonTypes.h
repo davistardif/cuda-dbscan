@@ -26,6 +26,7 @@
 #include <thrust/unique.h>
 #include <thrust/iterator/constant_iterator.h>
 #include <thrust/extrema.h>
+#include <thrust/gather.h>
 
 #include "GPU/CudaWrapper.h"
 #include "GPU/MemoryManager.h"
