@@ -25,13 +25,35 @@ __global__ void gridMarkCoreCells(uint *d_index_counts, uint unique_key_count,
         uint start = d_index_counts[2*idx];
         uint length = d_index_counts[2*idx + 1];
         if (length >= min_points) {
-            printf("Core cell with %d points\n", length);
             for (uint i = start; i < start + length; i++) {
                 isCore[d_values[i]] = true;
             }
         }
     }
 }
+
+// Always called with one block since key_count <= 21
+__global__ void gridCheckCore(float *dev_coords, uint *d_index_counts,
+                              uint key_count, uint *d_values, bool *d_isCore,
+                              uint min_points, float EPS_SQ, float x, float y,
+                              int pt_idx) {
+    __shared__ int count = 0;
+    uint start = d_index_counts[2*threadIdx.x];
+    uint length = d_index_counts[2*threadIdx.x+1];
+    for (uint i = start; i < start + length && count < min_points; i++) {
+        float x2 = dev_coords[d_values[i]*2];
+        float y2 = dev_coords[d_values[i]*2 + 1];
+        if ((x2 - x) * (x2 - x) + (y2 - y) * (y2 - y) <= EPS_SQ) {
+            atomicAdd(&count, 1);
+        }
+    }
+    __syncthreads();
+    if (threadIdx.x == 0 && count >= min_points) {
+        d_isCore[pt_idx] = true;
+    }        
+}
+    
+    
 
 void callGridLabelKernel(uint blocks, uint threadsPerBlock,
                          uint *dev_pt_ids, uint *dev_grid_labels,

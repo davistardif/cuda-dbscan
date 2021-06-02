@@ -11,6 +11,8 @@
 #include "cudpp_config.h"
 
 #include <cmath>
+#include <cassert>
+#include <vector>
 
 #define SQRT_2 (1.4142135623)
 
@@ -49,18 +51,39 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
     CUDPPHandle *grid;
     CUDPP_CALL(cudppHashTable(*cudpp, grid, &hashconf));
     CUDPP_CALL(cudppHashInsert(*grid, dev_grid_labels, dev_pt_ids, pts.size));
+
+    // Mark core points where cell has >= min points
     unsigned int **d_values;
     CUDPP_CALL(cudppMultivalueHashGetAllValues(*grid, d_values));
     unsigned int **d_index_counts;
     CUDPP_CALL(cudppMultivalueHashGetIndexCounts(*grid, d_index_counts));
     unsigned int unique_key_count;
     CUDPP_CALL(cudppMultivalueHashGetUniqueKeyCount(*grid, &unique_key_count));
-    bool *isCore;
-    CUDA_CALL(cudaMalloc((void**)&isCore, pts.size * sizeof(bool)));
+    bool *d_isCore, *isCore;
+    CUDA_CALL(cudaMalloc((void**)&d_isCore, pts.size * sizeof(bool)));
     CUDA_CALL(cudaMemset(isCore, 0, pts.size * sizeof(bool)));
     callGridMarkCoreCells(blocks, threadsPerBlock, *d_index_counts,
-                          unique_key_count, *d_values, isCore, min_points);
+                          unique_key_count, *d_values, d_isCore, min_points);
     
+    // Find remaining core points
+    isCore = (bool *) malloc(pts.size * sizeof(bool));
+    assert(isCore != nullptr);
+    CUDA_CALL(cudaMemcpy(isCore, d_isCore, pts.size * sizeof(bool), cudaMemcpyDeviceToHost));
+    uint *d_query_keys, *d_results;
+    CUDA_CALL(cudaMalloc((void**)&d_query_keys, 21 * sizeof(uint)));
+    CUDA_CALL(cudaMalloc((void**)&d_results, 21 * sizeof(uint2)));
+    for (int i = 0; i < pts.size; i++) {
+        if (!isCore[i]) {
+            int x = (int) ((pts.get_x(i) - bbox.min_x) / side_len);
+            int y = (int) ((pts.get_y(i) - bbox.min_y) / side_len);
+            vector<uint> ncells = neighbor_cell_ids(x, y, grid_x_size, grid_y_size);
+            CUDA_CALL(cudaMemcpy(d_query_keys, ncells.data,
+                                 ncells.size() * sizeof(uint), cudaMemcpyHostToDevice));
+            CUDPP_CALL(cudppHashRetrieve(*grid, d_query_keys, d_results, ncells.size())); 
+        }
+    }
+
+              
     CUDPP_CALL(cudppDestroyHashTable(*cudpp, *grid));
     
     CUDPP_CALL(cudppDestroy(*cudpp));
@@ -94,4 +117,47 @@ BBox cuda_extent(PointSet &pts, float *dev_coords,
     CUDA_CALL(cudaFree(dev_min_x));
     CUDA_CALL(cudaFree(dev_min_y));
     return bbox;
+}
+
+vector<uint> neighbor_cell_ids(int x, int y, int grid_x_size, int grid_y_size) {
+    /* Returns a vector of cell id's in grid which are epsilon neighbors
+       of (x,y) and not out of bounds.
+       includes (x,y) itself
+    */
+    uint cell_r_c[] = {
+        (y-2), x - 1,
+        (y-2), x,
+        (y-2), x + 1,
+        (y-1), x - 2,
+        (y-1), x - 1,
+        (y-1), x,
+        (y-1), x + 1,
+        (y-1), x + 2,
+        y, x - 2,
+        y, x - 1,
+        y, x + 1,
+        y, x + 2,
+        (y+2), x - 1,
+        (y+2), x,
+        (y+2), x + 1,
+        (y+1), x - 2,
+        (y+1), x - 1,
+        (y+1), x,
+        (y+1), x + 1,
+        (y+1), x + 2
+    };
+    vector<uint> valid_cells;
+    valid_cells.reserve(21);
+    valid_cell.push_back(y * grid_x_size + x);
+    for (int i = 0; i < 20; i++) { // 20 neighbor cell possibilities
+        uint r = cell_r_c[i*2];
+        uint c = cell_r_c[i*2 + 1];
+        if (c < 0 || r < 0 || c >= grid_x_size || r >= grid_y_size) {
+            // out of bounds
+            continue;
+        }
+        uint id = r * grid_x_size + c;
+        valid_cells.push_back(id);
+    }
+    return valid_cells;
 }
