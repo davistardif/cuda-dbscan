@@ -4,13 +4,13 @@ First, make sure that git submodule dependencies are added:
 `git submodule init`
 `git submodule update`
 
-Then, build the cudpp dependency using
-`make cudpp`
+Then, build the project dependencies using
+`make deps`
 
 Finally, build this project using
 `make`
 
-On systems where CUDA is not available, simply run
+On systems where CUDA is not available, ignore the above and simply run
 `make cpu`
 
 ## CPU Demo
