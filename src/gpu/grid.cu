@@ -28,6 +28,7 @@ __global__ void gridMarkCoreCells(uint *d_index_counts, uint unique_key_count,
         }
     }
 }
+
 void callGridLabelKernel(uint blocks, uint threadsPerBlock,
                          uint *dev_pt_ids, uint *dev_grid_labels,
                          float *dev_coords,
@@ -36,5 +37,13 @@ void callGridLabelKernel(uint blocks, uint threadsPerBlock,
     gridLabelKernel<<<blocks, threadsPerBlock>>>(dev_pt_ids, dev_grid_labels,
                                                  dev_coords, min_x, min_y,
                                                  side_len, grid_x_size, num);
+    CUDA_KERNEL_CHECK();
+}
+
+void callGridMarkCoreCells(uint blocks, uint threadsPerBlock,
+                           uint *d_index_counts, uint unique_key_count,
+                           uint *d_values, bool *isCore, uint min_points) {
+    gridMarkCoreCells<<<blocks, threadsPerBlock>>>(
+        d_index_counts, unique_key_count, d_values, isCore, min_points);
     CUDA_KERNEL_CHECK();
 }
