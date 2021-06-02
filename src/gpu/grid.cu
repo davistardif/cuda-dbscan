@@ -37,7 +37,10 @@ __global__ void gridCheckCore(float *dev_coords, uint *d_index_counts,
                               uint key_count, uint *d_values, bool *d_isCore,
                               uint min_points, float EPS_SQ, float x, float y,
                               int pt_idx) {
-    __shared__ int count = 0;
+    __shared__ int count;
+    if (threadIdx.x == 0)
+        count = 0;
+    __syncthreads();
     uint start = d_index_counts[2*threadIdx.x];
     uint length = d_index_counts[2*threadIdx.x+1];
     for (uint i = start; i < start + length && count < min_points; i++) {
