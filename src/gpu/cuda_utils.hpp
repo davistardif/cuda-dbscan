@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cuda_runtime.h>
-#include "cudpp.h"
 #include <fstream>
 #include <iostream>
 
@@ -13,16 +12,6 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
     if (code != cudaSuccess) 
     {
         fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-        exit(code);
-    }
-}
-
-#define CUDPP_CALL(ans) { cudppAssert((ans), __FILE__, __LINE__); }
-inline void cudppAssert(CUDPPResult code, const char *file, int line, bool abort=true)
-{
-    if (code != CUDPP_SUCCESS) 
-    {
-        fprintf(stderr,"CUDPP Error at: %s %d\n", file, line);
         exit(code);
     }
 }
