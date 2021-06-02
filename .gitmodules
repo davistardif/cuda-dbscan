@@ -1,4 +1,0 @@
-[submodule "lib/cudpp"]
-	path = lib/cudpp
-	url = https://github.com/davistardif/cudpp
-	ignore = untracked
