@@ -88,14 +88,21 @@ cuda: $(CUDA_OBJ_FILES) $(CUDA_OBJ)
 $(CUDA_OBJ): $(CUDA_OBJ_FILES)
 	$(NVCC) $(CUDA_LINK_FLAGS) $(NVCC_GENCODES) -o $@ $(NVCC_INCLUDE) $^
 
+deps: cudpp gDel2D
+
 cudpp:
 	rm -rf lib/cudpp/build
 	mkdir lib/cudpp/build
 	cd lib/cudpp/build; cmake ../src ../; make
+
+gDel2D:
+	rm -rf lib/gDel2D/build
+	mkdir lib/gDel2D/build
+	cd lib/gDel2D/build; cmake ..; make
 
 # Clean everything including temporary Emacs files
 clean:
 	rm -f cpu-dbscan gpu-dbscan *.o *~
 	rm -f src/*~
 
-.PHONY: clean cudpp
+.PHONY: clean cudpp gDel2D deps
