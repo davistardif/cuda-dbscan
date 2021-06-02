@@ -3,7 +3,7 @@
 #include "cuda_utils.hpp"
 
 #include <cuda_runtime.h>
-#include <iostream>
+#include <stdio.h>
 
 __global__ void gridLabelKernel(uint *dev_pt_ids, uint *dev_grid_labels,
                                 float *dev_coords,
@@ -25,7 +25,7 @@ __global__ void gridMarkCoreCells(uint *d_index_counts, uint unique_key_count,
         uint start = d_index_counts[2*idx];
         uint length = d_index_counts[2*idx + 1];
         if (length >= min_points) {
-            std::cout << "Core cell with " << length << "points\n";
+            printf("Core cell with %d points\n", length);
             for (uint i = start; i < start + length; i++) {
                 isCore[d_values[i]] = true;
             }
