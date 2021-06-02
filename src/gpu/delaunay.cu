@@ -36,28 +36,6 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
                         dev_coords, bbox.min_x, bbox.min_y, side_len,
                         grid_x_size, pts.size);
 
-    // Insert into hash table
-    CUDPPHandle *cudpp;
-    CUDPP_CALL(cudppCreate(cudpp));
-    CUDPPHashTableConfig hashconf = {
-        CUDPP_MULTIVALUE_HASH_TABLE,
-        (uint) pts.size,
-        1.25 // extra memory factor (1.05 to 2.0, trades memory for build speed)
-    };
-    CUDPPHandle *grid;
-    CUDPP_CALL(cudppHashTable(*cudpp, grid, &hashconf));
-    CUDPP_CALL(cudppHashInsert(*grid, dev_grid_labels, dev_pt_ids, pts.size));
-    unsigned int **d_values;
-    CUDPP_CALL(cudppMultivalueHashGetAllValues(*grid, d_values));
-    unsigned int **d_index_counts;
-    CUDPP_CALL(cudppMultivalueHashGetIndexCounts(*grid, d_index_counts));
-    unsigned int unique_key_count;
-    CUDPP_CALL(cudppMultivalueHashGetUniqueKeyCount(*grid, &unique_key_count));
-
-    
-    CUDPP_CALL(cudppDestroyHashTable(*cudpp, *grid));
-    
-    CUDPP_CALL(cudppDestroy(*cudpp));
     CUDA_CALL(cudaFree(dev_coords));
     return clusters;
 }
