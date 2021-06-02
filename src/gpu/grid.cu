@@ -17,7 +17,17 @@ __global__ void gridLabelKernel(uint *dev_pt_ids, uint *dev_grid_labels,
         dev_grid_labels[idx] = label;
     }
 }
-
+__global__ void gridMarkCoreCells(uint *d_index_counts, uint unique_key_count,
+                                  uint *d_values, bool *isCore, uint min_points) {
+    uint idx = blockIdx.x * blockDim.x + threadIdx.x;
+    for (; idx < unique_key_count; idx += blockDim.x) {
+        uint start = d_index_counts[2*idx];
+        uint length = d_index_counts[2*idx + 1];
+        for (uint i = start; i < start + length; i++) {
+            isCore[d_values[i]] = true;
+        }
+    }
+}
 void callGridLabelKernel(uint blocks, uint threadsPerBlock,
                          uint *dev_pt_ids, uint *dev_grid_labels,
                          float *dev_coords,
