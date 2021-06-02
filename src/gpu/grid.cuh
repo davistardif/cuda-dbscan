@@ -9,3 +9,8 @@ void callGridLabelKernel(uint blocks, uint threadsPerBlock,
 void callGridMarkCoreCells(uint blocks, uint threadsPerBlock,
                            uint *d_index_counts, uint unique_key_count,
                            uint *d_values, bool *isCore, uint min_points);
+
+void callGridCheckCore(float *dev_coords, uint *d_index_counts,
+                       uint key_count, uint *d_values, bool *d_isCore,
+                       uint min_points, float EPS_SQ, float x, float y,
+                       int pt_idx);

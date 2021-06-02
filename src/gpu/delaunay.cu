@@ -81,7 +81,10 @@ Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points
             vector<int> ncells = neighbor_cell_ids(x, y, grid_x_size, grid_y_size);
             CUDA_CALL(cudaMemcpy(d_query_keys, (uint *) ncells.data(),
                                  ncells.size() * sizeof(uint), cudaMemcpyHostToDevice));
-            CUDPP_CALL(cudppHashRetrieve(*grid, d_query_keys, d_results, ncells.size())); 
+            CUDPP_CALL(cudppHashRetrieve(*grid, d_query_keys, d_results, ncells.size()));
+            callGridCheckCore(dev_coords, d_results, ncells.size(), *d_values,
+                              d_isCore, min_points, EPS_SQ,
+                              pts.get_x(i), pts.get_y(i), i);
         }
     }
 

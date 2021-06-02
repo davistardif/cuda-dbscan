@@ -76,3 +76,13 @@ void callGridMarkCoreCells(uint blocks, uint threadsPerBlock,
         d_index_counts, unique_key_count, d_values, isCore, min_points);
     CUDA_KERNEL_CHECK();
 }
+
+void callGridCheckCore(float *dev_coords, uint *d_index_counts,
+                       uint key_count, uint *d_values, bool *d_isCore,
+                       uint min_points, float EPS_SQ, float x, float y,
+                       int pt_idx) {
+    gridCheckCore<<<1, key_count>>>(dev_coords, d_index_counts,
+                                    key_count, d_values, d_isCore, min_points,
+                                    EPS_SQ, x, y, pt_idx);
+    CUDA_KERNEL_CHECK();
+}
