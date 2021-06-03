@@ -5,6 +5,7 @@
 #include "cuda_utils.hpp"
 #include "minmax.cuh"
 #include "grid.cuh"
+#include "disjoint_set.hpp"
 
 #include "cudpp.h"
 #include "cudpp_hash.h"
