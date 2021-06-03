@@ -36,7 +36,13 @@ Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_point
     const float side_len = epsilon / SQRT_2;
     int grid_x_size = (int) ((bbox.max_x - bbox.min_x) / side_len) + 1;
     int grid_y_size = (int) ((bbox.max_y - bbox.min_y) / side_len) + 1;
-
+    /*
+      Unfortunately I can't get the cudpp hashtable to work with
+      gDel2D. I think that maybe they require different versions of 
+      thrust/CUB but I don't have any more time to mess with it. Anyways,
+      here is the code that I was using to create the hash table and find 
+      core points on the GPU:
+      
     // label each point with a grid bin
     uint *dev_pt_ids, *dev_grid_labels;
     CUDA_CALL(cudaMalloc((void**)&dev_pt_ids, pts.size * sizeof(uint)));
@@ -44,6 +50,69 @@ Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_point
     callGridLabelKernel(blocks, threadsPerBlock, dev_pt_ids, dev_grid_labels,
                         dev_coords, bbox.min_x, bbox.min_y, side_len,
                         grid_x_size, pts.size);
+
+    // Insert into hash table
+    CUDPPHandle cudpp;
+    CUDPP_CALL(cudppCreate(&cudpp));
+    CUDPPHashTableConfig *hashconf = new CUDPPHashTableConfig;
+    *hashconf = {
+        CUDPP_MULTIVALUE_HASH_TABLE,
+        (uint) pts.size,
+        1.25 // extra memory factor (1.05 to 2.0, trades memory for build speed)
+    };
+    CUDPPHandle grid;
+    CUDPP_CALL(cudppHashTable(cudpp, &grid, hashconf));
+    CUDPP_CALL(cudppHashInsert(grid, dev_grid_labels, dev_pt_ids, pts.size));
+
+    // Mark core points where cell has >= min points
+    unsigned int *d_values;
+    CUDA_CALL(cudaMalloc((void**)&d_values, pts.size * sizeof(unsigned int)));
+    CUDPP_CALL(cudppMultivalueHashGetAllValues(grid, &d_values));
+    unsigned int unique_key_count;
+    CUDPP_CALL(cudppMultivalueHashGetUniqueKeyCount(grid, &unique_key_count));
+    unsigned int *d_index_counts;
+    CUDA_CALL(cudaMalloc((void**)&d_index_counts, unique_key_count * 2 * sizeof(unsigned int)));
+    CUDPP_CALL(cudppMultivalueHashGetIndexCounts(grid, &d_index_counts));
+    
+    bool *d_isCore, *isCore;
+    CUDA_CALL(cudaMalloc((void**)&d_isCore, pts.size * sizeof(bool)));
+    CUDA_CALL(cudaMemset(d_isCore, 0, pts.size * sizeof(bool)));
+    callGridMarkCoreCells(blocks, threadsPerBlock, d_index_counts,
+                          unique_key_count, d_values, d_isCore, min_points);
+    
+    // Find remaining core points
+    isCore = (bool *) malloc(pts.size * sizeof(bool));
+    assert(isCore != nullptr);
+    CUDA_CALL(cudaMemcpy(isCore, d_isCore, pts.size * sizeof(bool), cudaMemcpyDeviceToHost));
+    uint *d_query_keys, *d_results;
+    CUDA_CALL(cudaMalloc((void**)&d_query_keys, 21 * sizeof(uint)));
+    CUDA_CALL(cudaMalloc((void**)&d_results, 21 * sizeof(uint2)));
+    for (int i = 0; i < pts.size; i++) {
+        if (!isCore[i]) {
+            int x = (int) ((pts.get_x(i) - bbox.min_x) / side_len);
+            int y = (int) ((pts.get_y(i) - bbox.min_y) / side_len);
+            vector<int> ncells = neighbor_cell_ids(x, y, grid_x_size, grid_y_size);
+            CUDA_CALL(cudaMemcpy(d_query_keys, (uint *) ncells.data(),
+                                 ncells.size() * sizeof(uint), cudaMemcpyHostToDevice));
+            CUDPP_CALL(cudppHashRetrieve(grid, d_query_keys, d_results, ncells.size()));
+            callGridCheckCore(dev_coords, d_results, ncells.size(), d_values,
+                              d_isCore, min_points, EPS_SQ,
+                              pts.get_x(i), pts.get_y(i), i);
+        }
+    }
+    CUDA_CALL(cudaMemcpy(isCore, d_isCore, pts.size * sizeof(bool), cudaMemcpyDeviceToHost));
+    */
+    /* Below is code for finding core points with CPU, as is done
+       in the CPU demo. 
+    */
+    // label each point with a grid bin
+    uint *dev_pt_ids, *dev_grid_labels;
+    CUDA_CALL(cudaMalloc((void**)&dev_pt_ids, pts.size * sizeof(uint)));
+    CUDA_CALL(cudaMalloc((void**)&dev_grid_labels, pts.size * sizeof(uint)));
+    callGridLabelKernel(blocks, threadsPerBlock, dev_pt_ids, dev_grid_labels,
+                        dev_coords, bbox.min_x, bbox.min_y, side_len,
+                        grid_x_size, pts.size);
+    CUDA_CALL(cudaFree(dev_pt_ids)); // not needed for CPU version
     uint *grid_labels = (uint *) malloc(pts.size * sizeof(uint));
     CUDA_CALL(cudaMemcpy(grid_labels, dev_grid_labels, pts.size * sizeof(uint), cudaMemcpyDeviceToHost));
     // Insert into hash table
@@ -124,9 +193,8 @@ Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_point
     gdelIn.pointVec = core_pts;
     GDel2DOutput gdelOut;
     gdel.compute(gdelIn, &gdelOut);
-              
-    //CUDPP_CALL(cudppDestroyHashTable(cudpp, grid));
     
+    //CUDPP_CALL(cudppDestroyHashTable(cudpp, grid));
     //CUDPP_CALL(cudppDestroy(cudpp));
     CUDA_CALL(cudaFree(dev_coords));
     return clusters;
@@ -160,7 +228,8 @@ BBox cuda_extent(PointSet &pts, float *dev_coords,
     return bbox;
 }
 
-/*
+/* This was a modified version of neighbor_cell_ids from CPU demo
+   that was adapted for use with the CUDPP hash table
 vector<int> neighbor_cell_ids(int x, int y, int grid_x_size, int grid_y_size) {
     /* Returns a vector of cell id's in grid which are epsilon neighbors
        of (x,y) and not out of bounds.
