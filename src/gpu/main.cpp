@@ -5,6 +5,11 @@
 #include "delaunay.cuh"
 #include "cmdline_parse.hpp"
 
+#include <chrono>
+#include <iostream>
+using namespace std;
+using namespace std::chrono;
+
 int main(int argc, char **argv) {
     int n_pts, min_points;
     float epsilon;

@@ -1,4 +1,7 @@
+#include "cmdline_parse.hpp"
+
 #include <unistd.h>
+#include <cstdlib>
 
 void parse(int argc, char **argv, int *n_pts, int *min_points, float *epsilon,
            bool *print) {
