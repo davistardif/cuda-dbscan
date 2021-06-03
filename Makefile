@@ -102,6 +102,14 @@ cudpp:
 	mkdir lib/cudpp/build
 	cd lib/cudpp/build; cmake ../src ../; make
 
+.SILENT:
+correctness: cpu gpu
+	./gpu-dbscan -p > gpu_res.txt
+	./cpu-dbscan -p > cpu_res.txt
+	python3 scripts/correctness.py cpu_res.txt gpu_res.txt
+	echo 'If there are no errors above, GPU and CPU DBSCAN returned the same result'
+	rm -f gpu_res.txt cpu_res.txt
+
 # Clean everything including temporary Emacs files
 clean:
 	rm -f cpu-dbscan gpu-dbscan *.o *~
