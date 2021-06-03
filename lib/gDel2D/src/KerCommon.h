@@ -27,17 +27,10 @@ __forceinline__ __device__ int getThreadNum()
 
 //////////////////////////////////////////////////////////// Helper functions //
 
-#ifdef REAL_TYPE_FP32
 struct __align__(8) RealType2 
 {
     float _c0, _c1; 
 };
-#else
-struct __align__(16) RealType2 
-{
-    double _c0, _c1; 
-};
-#endif
 
 __forceinline__ __device__ 
 Point2 loadPoint2( const Point2 *pointArr, int idx ) 

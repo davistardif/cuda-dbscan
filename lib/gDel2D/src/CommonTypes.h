@@ -34,13 +34,8 @@
 #define DIM     2
 #define DEG     ( DIM + 1 ) 
 
-#ifdef REAL_TYPE_FP32
 typedef float RealType;
 const RealType RealMax = FLT_MAX;
-#else
-typedef double RealType;
-const RealType RealMax = DBL_MAX;
-#endif
 
 typedef unsigned char uchar;
 
