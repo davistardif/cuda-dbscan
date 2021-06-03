@@ -193,6 +193,78 @@ Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_point
     gdelIn.pointVec = core_pts;
     GDel2DOutput gdelOut;
     gdel.compute(gdelIn, &gdelOut);
+    /*
+    int *component_id = (int *) malloc(num_core_cells * sizeof(int));
+    // nindex[v] stores beginning index of neighbor list for vertex v in nlist
+    // last element of nindex stores length of nlist
+    int *nindex = (int *) malloc((num_core_cells + 1) * sizeof(int));
+    vector<int> nlist;
+    */
+    DisjointSet dj_set(num_core_cells);
+    for (Tri &tri : gdelOut.triVec) {
+        int pt1 = core_idx[tri._v[0]];
+        int pt2 = core_idx[tri._v[1]];
+        int pt3 = core_idx[tri._v[2]];
+        int x1 = (int) ((pts.get_x(pt1) - bbox.min_x) / side_len);
+        int y1 = (int) ((pts.get_y(pt1) - bbox.min_y) / side_len);
+        int x2 = (int) ((pts.get_x(pt2) - bbox.min_x) / side_len);
+        int y2 = (int) ((pts.get_y(pt2) - bbox.min_y) / side_len);
+        int x3 = (int) ((pts.get_x(pt3) - bbox.min_x) / side_len);
+        int y3 = (int) ((pts.get_y(pt3) - bbox.min_y) / side_len);
+        if (pts.dist_sq(pt1, pt2) <= EPS_SQ && (x1 != x2 || y1 != y2)) {
+            int idx1 = core_cell_idx[y1*grid_x_size + x1];
+            int idx2 = core_cell_idx[y2*grid_x_size + x2];
+            dj_set.union_sets(idx1, idx2);
+        }
+        if (pts.dist_sq(pt1, pt3) <= EPS_SQ && (x1 != x3 || y1 != y3)) {
+            int idx1 = core_cell_idx[y1*grid_x_size + x1];
+            int idx2 = core_cell_idx[y3*grid_x_size + x3];
+            dj_set.union_sets(idx1, idx2);
+        }
+        if (pts.dist_sq(pt2, pt3) <= EPS_SQ && (x2 != x3 || y2 != y3)) {
+            int idx1 = core_cell_idx[y2*grid_x_size + x2];
+            int idx2 = core_cell_idx[y3*grid_x_size + x3];
+            dj_set.union_sets(idx1, idx2);
+        }
+    }
+    // set cluster id based on disjoint set representatives
+    for (auto it = core_cell_idx.begin(); it != core_cell_idx.end(); it++) {
+        int cluster_id = dj_set.find_set(it->second) + 1;
+        for (auto pt_it = grid[it->first].begin(); pt_it != grid[it->first].end(); ++pt_it) {
+            if (is_core[*pt_it])
+                clusters.set_cluster(*pt_it, cluster_id);
+        }
+    }
+    // Assign border points
+    // Unfortunately this also cannot run in cuda without hash table support
+    for (int i = 0; i < pts.size; i++) {
+        if (clusters.is_labeled(i))
+            continue;
+        int x = (int) ((pts.get_x(i) - bbox.min_x) / side_len);
+        int y = (int) ((pts.get_y(i) - bbox.min_y) / side_len);
+        vector<int> nbrs = neighbor_cell_ids(grid, x, y, grid_x_size, grid_y_size);
+        bool done = false;
+        int j = 0;
+        while (!done && j < nbrs.size()) {
+            if (core_cell_idx.count(nbrs[j]) == 0) {
+                j++;
+                continue; // has no core points, skip this cell
+            }
+            vector<int> &nbr_pts = grid[nbrs[j]];
+            for (int &nbr_pt : nbr_pts) {
+                if (clusters.is_core(nbr_pt) && pts.dist_sq(i, nbr_pt) <= EPS_SQ) {
+                    clusters.set_border(i, clusters.get_cluster(nbr_pt));
+                    done = true;
+                    break;
+                }
+            }
+            j++;
+        }
+        if (!done) {
+            clusters.set_noise(i);
+        }
+    }
+    free(is_core);
     
     //CUDPP_CALL(cudppDestroyHashTable(cudpp, grid));
     //CUDPP_CALL(cudppDestroy(cudpp));
@@ -317,3 +389,4 @@ vector<int> neighbor_cell_ids(unordered_map<uint, vector<uint>> &grid,
     }
     return valid_cells;
 }
+    
