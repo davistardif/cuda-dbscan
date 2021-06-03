@@ -4,6 +4,7 @@
 #include "clustering.hpp"
 #include "cpu_dbscan.hpp"
 #include "load_taxi.hpp"
+#include "cmdline_parse.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -83,6 +84,9 @@ void test_delaunay_dbscan(void) {
 }
 
 int main(void) {
+    /*
+      Code for comparing naive and delaunay cpu dbscan
+   
     test_dbscan();
     test_delaunay_dbscan();
     PointSet ps = get_n_pickups(10000, nullptr);
@@ -98,6 +102,21 @@ int main(void) {
     end_time = high_resolution_clock::now();
     ms_elapsed = end_time - start_time;
     cout << ms_elapsed.count() << "ms\n";
-    //c2.print();
+    */
+    int n_pts, min_points;
+    float epsilon;
+    bool print;
+    parse(argc, argv, &n_pts, &min_points, &epsilon, &print);
+    PointSet pts = get_n_pickups(n_pts, nullptr);
+    auto start_time = high_resolution_clock::now();
+    Clustering c = delaunay_dbscan(pts, epsilon, min_points);
+    auto end_time = high_resolution_clock::now();
+    if (print) {
+        c.print();
+    }
+    else {
+        duration<double, std::milli> ms_elapsed = end_time - start_time;
+        cout << ms_elapsed.count() << "ms\n";
+    }
     return 0;
 }
