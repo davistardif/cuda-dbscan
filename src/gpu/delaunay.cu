@@ -45,13 +45,14 @@ Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_point
     // Insert into hash table
     CUDPPHandle *cudpp;
     CUDPP_CALL(cudppCreate(cudpp));
-    CUDPPHashTableConfig hashconf = {
+    CUDPPHashTableConfig *hashconf = new CUDPPHashTableConfig;
+    *hashconf = {
         CUDPP_MULTIVALUE_HASH_TABLE,
         (uint) pts.size,
         1.25 // extra memory factor (1.05 to 2.0, trades memory for build speed)
     };
     CUDPPHandle *grid;
-    CUDPP_CALL(cudppHashTable(*cudpp, grid, &hashconf));
+    CUDPP_CALL(cudppHashTable(*cudpp, grid, hashconf));
     CUDPP_CALL(cudppHashInsert(*grid, dev_grid_labels, dev_pt_ids, pts.size));
 
     // Mark core points where cell has >= min points
