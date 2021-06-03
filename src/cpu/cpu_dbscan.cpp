@@ -83,7 +83,7 @@ void test_delaunay_dbscan(void) {
     }
 }
 
-int main(void) {
+int main(int argc, char **argv) {
     /*
       Code for comparing naive and delaunay cpu dbscan
    
