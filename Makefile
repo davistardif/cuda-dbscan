@@ -110,6 +110,13 @@ correctness: cpu gpu
 	echo 'If there are no errors above, GPU and CPU DBSCAN returned the same result'
 	rm -f gpu_res.txt cpu_res.txt
 
+.SILENT:
+time-trial: cpu gpu
+	echo 'GPU:'
+	./gpu-dbscan -n 10000
+	echo 'CPU:'
+	./cpu-dbscan -n 10000
+
 # Clean everything including temporary Emacs files
 clean:
 	rm -f cpu-dbscan gpu-dbscan *.o *~
