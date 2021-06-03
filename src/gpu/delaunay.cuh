@@ -6,7 +6,7 @@
 
 using namespace std;
 
-Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points);
+Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points);
 
 BBox cuda_extent(PointSet &pts, float *dev_coords,
                  const unsigned int blocks,

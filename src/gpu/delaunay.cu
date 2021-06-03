@@ -21,11 +21,11 @@
 
 using std::vector;
 
-Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points) {
+Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points) {
     // TODO: set these more appropriately
     const unsigned int threadsPerBlock = 64;
     const unsigned int blocks = (int) ceil((float) pts.size / threadsPerBlock);
-    Clustering *clusters = new Clustering(pts.size);
+    Clustering clusters(pts.size);
     const float EPS_SQ = epsilon * epsilon;
     float *dev_coords;
     CUDA_CALL(cudaMalloc((void**)&dev_coords, pts.size * 2 * sizeof(float)));
@@ -250,8 +250,8 @@ Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_point
                 j++;
                 continue; // has no core points, skip this cell
             }
-            vector<int> &nbr_pts = grid[nbrs[j]];
-            for (int &nbr_pt : nbr_pts) {
+            vector<uint> &nbr_pts = grid[nbrs[j]];
+            for (uint &nbr_pt : nbr_pts) {
                 if (clusters.is_core(nbr_pt) && pts.dist_sq(i, nbr_pt) <= EPS_SQ) {
                     clusters.set_border(i, clusters.get_cluster(nbr_pt));
                     done = true;
