@@ -6,8 +6,20 @@
 #include "cmdline_parse.hpp"
 
 int main(int argc, char **argv) {
-    PointSet pts = get_n_pickups(1024, nullptr);
-    Clustering c = delaunay_dbscan(pts, 0.1, 100);
-    c.print();
+    int n_pts, min_points;
+    float epsilon;
+    bool print;
+    parse(argc, argv, &n_pts, &min_points, &epsilon, &print);
+    PointSet pts = get_n_pickups(n_pts, nullptr);
+    auto start_time = high_resolution_clock::now();
+    Clustering c = delaunay_dbscan(pts, epsilon, min_points);
+    auto end_time = high_resolution_clock::now();
+    if (print) {
+        c.print();
+    }
+    else {
+        duration<double, std::milli> ms_elapsed = end_time - start_time;
+        cout << ms_elapsed.count() << "ms\n";
+    }
     return 0;
 }
