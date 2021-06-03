@@ -58,17 +58,20 @@ Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_point
     CUDPP_CALL(cudppHashInsert(grid, dev_grid_labels, dev_pt_ids, pts.size));
 
     // Mark core points where cell has >= min points
-    unsigned int **d_values;
-    CUDPP_CALL(cudppMultivalueHashGetAllValues(grid, d_values));
-    unsigned int **d_index_counts;
-    CUDPP_CALL(cudppMultivalueHashGetIndexCounts(grid, d_index_counts));
+    unsigned int *d_values;
+    CUDA_CALL(cudaMalloc((void**)&d_values, pts.size * sizeof(unsigned int)));
+    CUDPP_CALL(cudppMultivalueHashGetAllValues(grid, &d_values));
     unsigned int unique_key_count;
     CUDPP_CALL(cudppMultivalueHashGetUniqueKeyCount(grid, &unique_key_count));
+    unsigned int *d_index_counts;
+    CUDA_CALL(cudaMalloc((void**)&d_index_counts, unique_key_count * 2 * sizeof(unsigned int)));
+    CUDPP_CALL(cudppMultivalueHashGetIndexCounts(grid, &d_index_counts));
+    
     bool *d_isCore, *isCore;
     CUDA_CALL(cudaMalloc((void**)&d_isCore, pts.size * sizeof(bool)));
     CUDA_CALL(cudaMemset(d_isCore, 0, pts.size * sizeof(bool)));
-    callGridMarkCoreCells(blocks, threadsPerBlock, *d_index_counts,
-                          unique_key_count, *d_values, d_isCore, min_points);
+    callGridMarkCoreCells(blocks, threadsPerBlock, d_index_counts,
+                          unique_key_count, d_values, d_isCore, min_points);
     
     // Find remaining core points
     isCore = (bool *) malloc(pts.size * sizeof(bool));
@@ -85,7 +88,7 @@ Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_point
             CUDA_CALL(cudaMemcpy(d_query_keys, (uint *) ncells.data(),
                                  ncells.size() * sizeof(uint), cudaMemcpyHostToDevice));
             CUDPP_CALL(cudppHashRetrieve(grid, d_query_keys, d_results, ncells.size()));
-            callGridCheckCore(dev_coords, d_results, ncells.size(), *d_values,
+            callGridCheckCore(dev_coords, d_results, ncells.size(), d_values,
                               d_isCore, min_points, EPS_SQ,
                               pts.get_x(i), pts.get_y(i), i);
         }
