@@ -64,7 +64,7 @@ Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_point
     CUDPP_CALL(cudppMultivalueHashGetUniqueKeyCount(grid, &unique_key_count));
     bool *d_isCore, *isCore;
     CUDA_CALL(cudaMalloc((void**)&d_isCore, pts.size * sizeof(bool)));
-    CUDA_CALL(cudaMemset(isCore, 0, pts.size * sizeof(bool)));
+    CUDA_CALL(cudaMemset(d_isCore, 0, pts.size * sizeof(bool)));
     callGridMarkCoreCells(blocks, threadsPerBlock, *d_index_counts,
                           unique_key_count, *d_values, d_isCore, min_points);
     
