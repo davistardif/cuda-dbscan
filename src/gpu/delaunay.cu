@@ -10,6 +10,8 @@
 #include "cudpp_hash.h"
 #include "cudpp_config.h"
 
+#include "GpuDelaunay.h"
+
 #include <cmath>
 #include <cassert>
 #include <vector>
@@ -88,7 +90,24 @@ Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_point
                               pts.get_x(i), pts.get_y(i), i);
         }
     }
-
+    CUDA_CALL(cudaMemcpy(isCore, d_isCore, pts.size * sizeof(bool), cudaMemcpyDeviceToHost));
+    // Delaunay triangulation of core points
+    Point2HVec core_pts;
+    vector<int> core_idx;
+    Point2 p;
+    for (int i = 0; i < pts.size; i++) {
+        if (isCore[i]) {
+            p._p[0] = pts.get_x(i);
+            p._p[1] = pts.get_y(i);
+            core_pts.push_back(p);
+            core_idx.push_back(i);
+        }
+    }
+    GpuDel gdel;
+    GDel2DInput gdelIn;
+    gdelIn.pointVec = core_pts;
+    GDel2DOutput gdelOut;
+    gdel.compute(gdelIn, &gdelOut);
               
     CUDPP_CALL(cudppDestroyHashTable(cudpp, grid));
     
