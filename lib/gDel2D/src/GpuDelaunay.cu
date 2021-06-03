@@ -1482,9 +1482,6 @@ void GpuDel::outputToHost()
     _output->ptInfty = _ptInfty; 
 
     stopTiming( ProfDefault, _output->stats.outTime ); 
-    
-    ////
-    std::cout << "# Triangles:     " << _triVec.size() << std::endl; 
 
     return;
 }
