@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../CommonTypes.h"
+#include "CommonTypes.h"
 
 // create a tag derived from device_system_tag for distinguishing
 // our overloads of get_temporary_buffer and return_temporary_buffer

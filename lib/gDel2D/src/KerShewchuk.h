@@ -35,7 +35,7 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#include "../CommonTypes.h"
+#include "CommonTypes.h"
 
 // float or double
 #ifdef REAL_TYPE_FP32

@@ -41,7 +41,7 @@ DAMAGE.
 
 #pragma once
 
-#include "GPU/CudaWrapper.h"
+#include "CudaWrapper.h"
 
 #ifdef _WIN32
 

@@ -28,8 +28,8 @@
 #include <thrust/extrema.h>
 #include <thrust/gather.h>
 
-#include "GPU/CudaWrapper.h"
-#include "GPU/MemoryManager.h"
+#include "CudaWrapper.h"
+#include "MemoryManager.h"
 
 #define DIM     2
 #define DEG     ( DIM + 1 ) 

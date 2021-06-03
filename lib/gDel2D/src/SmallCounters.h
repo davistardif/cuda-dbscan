@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../CommonTypes.h"
+#include "CommonTypes.h"
 
 // Preallocate a collection of small integer counters, inilized to 0. 
 class SmallCounters

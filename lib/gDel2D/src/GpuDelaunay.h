@@ -6,10 +6,10 @@
 #include "CommonTypes.h"
 #include "PerfTimer.h"
 
-#include "GPU/CudaWrapper.h"
-#include "GPU/HostToKernel.h"
-#include "GPU/DPredWrapper.h"
-#include "GPU/SmallCounters.h"
+#include "CudaWrapper.h"
+#include "HostToKernel.h"
+#include "DPredWrapper.h"
+#include "SmallCounters.h"
 
 ////
 // Consts

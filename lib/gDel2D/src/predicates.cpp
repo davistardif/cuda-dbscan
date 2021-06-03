@@ -38,7 +38,7 @@
 #include <fpu_control.h>
 #endif /* LINUX */
 
-#include "../CommonTypes.h"
+#include "CommonTypes.h"
 
 /* On some machines, the exact arithmetic routines might be defeated by the  */
 /*   use of internal extended precision floating-point registers.  Sometimes */
