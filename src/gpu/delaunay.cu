@@ -18,11 +18,11 @@
 
 using std::vector;
 
-Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points) {
+Clustering *delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points) {
     // TODO: set these more appropriately
     const unsigned int threadsPerBlock = 64;
     const unsigned int blocks = (int) ceil((float) pts.size / threadsPerBlock);
-    Clustering clusters = new Clustering(pts.size);
+    Clustering *clusters = new Clustering(pts.size);
     const float EPS_SQ = epsilon * epsilon;
     float *dev_coords;
     CUDA_CALL(cudaMalloc((void**)&dev_coords, pts.size * 2 * sizeof(float)));
