@@ -23,9 +23,16 @@
 using std::vector;
 
 Clustering delaunay_dbscan(PointSet &pts, float epsilon, unsigned int min_points) {
-    // TODO: set these more appropriately
-    const unsigned int threadsPerBlock = 64;
-    const unsigned int blocks = (int) ceil((float) pts.size / threadsPerBlock);
+    cudaSetDevice(0);
+    cudaDeviceProp deviceProp;
+    cudaGetDeviceProperties(&deviceProp, 0);
+    if ((deviceProp.major == 9999) && (deviceProp.minor == 9999)) {fprintf(stderr, "ERROR: there is no CUDA capable device\n\n");  exit(-1);}
+    const int SMs = deviceProp.multiProcessorCount;
+    const int mTSM = deviceProp.maxThreadsPerMultiProcessor;
+
+    const unsigned int threadsPerBlock = 256;
+    const int blocks = SMs * mTSM / threadsPerBlock;
+    //const unsigned int blocks = (int) ceil((float) pts.size / threadsPerBlock);
     Clustering clusters(pts.size);
     const float EPS_SQ = epsilon * epsilon;
     float *dev_coords;
