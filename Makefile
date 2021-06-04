@@ -1,3 +1,5 @@
+.SILENT:
+
 # Source files
 CUDA_FILES = $(wildcard src/gpu/*.cu) 
 gDel2D_CUDA_FILES = $(wildcard lib/gDel2D/src/*.cu)
@@ -102,7 +104,6 @@ cudpp:
 	mkdir lib/cudpp/build
 	cd lib/cudpp/build; cmake ../src ../; make
 
-.SILENT:
 correctness: cpu gpu
 	./gpu-dbscan -p > gpu_res.txt
 	./cpu-dbscan -p > cpu_res.txt
@@ -110,12 +111,12 @@ correctness: cpu gpu
 	echo 'If there are no errors above, GPU and CPU DBSCAN returned the same result'
 	rm -f gpu_res.txt cpu_res.txt
 
-.SILENT:
+
 time-trial: cpu gpu
 	echo 'GPU:'
-	./gpu-dbscan -n 10000
+	for pts in 10000 15000 20000; do echo "n=$$pts"; ./gpu-dbscan -n $$pts; done; 
 	echo 'CPU:'
-	./cpu-dbscan -n 10000
+	for pts in 10000 15000 20000; do echo "n=$$pts"; ./cpu-dbscan -n $$pts; done; 
 
 # Clean everything including temporary Emacs files
 clean:
